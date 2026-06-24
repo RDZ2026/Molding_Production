@@ -421,7 +421,7 @@ function calcHit(good, goal) {
 }
 
 async function gasCall(action, payload = {}) {
-  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbwEYnjO0kYr_Q6akgbjl7ILywxPNMYm-bk4Ee1jjOr9_8T4bb-4b3SydeBNfulZajxo/exec') {
+  if (GAS_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
     throw new Error('GAS_URL not configured. Open index.html and replace the placeholder.');
   }
   const res = await fetch(GAS_URL, {
