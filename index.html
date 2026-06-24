@@ -204,7 +204,7 @@ const { useState, useEffect, useRef } = React;
 // ============================================================
 // CONFIG — Replace after deploying GAS
 // ============================================================
-const GAS_URL = 'YOUR_GAS_DEPLOYMENT_URL_HERE';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzdgJGBG9-uBaApBWVpQp2w3z2U7MlCKsqNGoYR6nydkysbCUR5O2rfYJkwpqvMxJ5yJA/exec';
 
 const PRESSES = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
 
@@ -421,7 +421,7 @@ function calcHit(good, goal) {
 }
 
 async function gasCall(action, payload = {}) {
-  if (GAS_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
+  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbzdgJGBG9-uBaApBWVpQp2w3z2U7MlCKsqNGoYR6nydkysbCUR5O2rfYJkwpqvMxJ5yJA/exec') {
     throw new Error('GAS_URL not configured. Open index.html and replace the placeholder.');
   }
   const res = await fetch(GAS_URL, {
