@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Molding Report | nVent Hoffman</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body, #root { height: 100%; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f4; color: #1a1a1a; }
+    .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    .app-header { background: #C8102E; color: white; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    .header-title { font-size: 16px; font-weight: bold; line-height: 1.25; }
+    .header-sub   { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+    .header-btn   { background: none; border: 1.5px solid rgba(255,255,255,0.55); color: white; font-size: 13px; font-weight: bold; padding: 5px 11px; border-radius: 5px; cursor: pointer; }
+    .date-bar { background: white; border-bottom: 1px solid #e2e5e9; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+    .date-bar-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .scroll-area { flex: 1; overflow-y: auto; padding: 12px 11px 88px; -webkit-overflow-scrolling: touch; }
+    .card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .press-card { border-left: 5px solid #d0d4d9; }
+    .press-card.is-running  { border-left-color: #28a745; }
+    .press-card.has-issue   { border-left-color: #C8102E !important; background: #fff8f8; }
+    .press-card.is-stopped  { border-left-color: #999; opacity: 0.88; }
+    .press-card-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 11px; margin-bottom: 11px; border-bottom: 1px solid #f2f2f2; }
+    .press-num { font-size: 19px; font-weight: bold; color: #1a1a1a; }
+    .press-badge { font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.2px; }
+    .badge-ok      { background: #e6f4ea; color: #1e7e34; }
+    .badge-issue   { background: #fde8ec; color: #C8102E; }
+    .badge-stopped { background: #f2f2f2; color: #777; }
+    .nr-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .nr-toggle-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; font-weight: bold; }
+    .sw { position: relative; width: 44px; height: 25px; flex-shrink: 0; cursor: pointer; }
+    .sw input { opacity: 0; width: 0; height: 0; }
+    .sw-track { position: absolute; inset: 0; background: #ccc; border-radius: 25px; transition: 0.18s; }
+    .sw-track::before { content: ''; position: absolute; width: 19px; height: 19px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.18s; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+    .sw input:checked + .sw-track { background: #C8102E; }
+    .sw input:checked + .sw-track::before { transform: translateX(19px); }
+    .field { margin-bottom: 11px; }
+    .field-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; display: block; }
+    input[type="text"], input[type="password"], input[type="date"], input[type="number"], select, textarea {
+      width: 100%; padding: 10px 11px; border: 1.5px solid #dce0e5; border-radius: 7px;
+      font-size: 16px; color: #1a1a1a; background: white; -webkit-appearance: none; appearance: none; transition: border-color 0.14s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #C8102E; box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
+    textarea { min-height: 68px; resize: vertical; line-height: 1.45; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .three-col input { text-align: center; font-weight: bold; padding: 10px 6px; }
+    .col-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.4px; text-align: center; margin-bottom: 4px; }
+    .hit-row { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 0 5px; }
+    .hit-pct { font-size: 26px; font-weight: bold; }
+    .hit-good { color: #1e7e34; } .hit-warn { color: #d6820a; } .hit-bad { color: #C8102E; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+    .toggle-text { font-size: 14px; color: #444; }
+    .divider { height: 1px; background: #f0f0f0; margin: 9px 0; }
+    .btn { display: block; width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; border: none; cursor: pointer; text-align: center; transition: filter 0.12s; }
+    .btn:active { filter: brightness(0.9); }
+    .btn-red     { background: #C8102E; color: white; }
+    .btn-gray    { background: #eaecef; color: #444; }
+    .btn-outline { background: white; border: 2px solid #C8102E; color: #C8102E; }
+    .btn-green   { background: #1e7e34; color: white; }
+    .btn-sm { padding: 7px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; display: inline-block; width: auto; transition: filter 0.12s; }
+    .btn-sm:active { filter: brightness(0.9); }
+    .btn-sm-gray   { background: #eaecef; color: #444; }
+    .btn-sm-danger { background: #fde8ec; color: #C8102E; border: 1.5px solid #f5bdc8; }
+    .btn-sm-green  { background: #e6f4ea; color: #1e7e34; border: 1.5px solid #a5d6a7; }
+    .bottom-bar { position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e5e9; padding: 11px 14px; z-index: 40; }
+    .lang-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px 24px; gap: 24px; background: white; }
+    .lang-logo-accent { width: 40px; height: 4px; background: #C8102E; border-radius: 2px; margin: 0 auto 14px; }
+    .lang-logo { font-size: 24px; font-weight: bold; color: #1a1a1a; text-align: center; }
+    .lang-dept { font-size: 13px; color: #888; text-align: center; margin-top: 4px; }
+    .lang-btns { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+    .lang-btn { width: 100%; padding: 17px; border: 2px solid #C8102E; border-radius: 8px; background: white; font-size: 17px; font-weight: bold; cursor: pointer; color: #C8102E; }
+    .lang-btn:active { background: #C8102E; color: white; }
+    .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: white; }
+    .login-box { width: 100%; max-width: 360px; }
+    .login-logo-accent { width: 36px; height: 4px; background: #C8102E; border-radius: 2px; margin: 0 auto 14px; }
+    .login-title { font-size: 22px; font-weight: bold; color: #1a1a1a; text-align: center; }
+    .login-sub { font-size: 13px; color: #888; text-align: center; margin-top: 5px; }
+    .lang-switch-btn { display: block; margin: 14px auto 0; background: none; border: none; color: #bbb; font-size: 13px; cursor: pointer; }
+    .alert { padding: 11px 13px; border-radius: 7px; font-size: 14px; margin-bottom: 12px; }
+    .alert-error   { background: #fde8ec; color: #a3001a; }
+    .alert-success { background: #e6f4ea; color: #155724; }
+    .alert-info    { background: #e8f0fe; color: #1a4dc3; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; }
+    .overlay-box { background: white; border-radius: 14px; padding: 28px 22px; text-align: center; width: 100%; max-width: 300px; }
+    .countdown-num { width: 76px; height: 76px; border-radius: 50%; background: #C8102E; color: white; font-size: 36px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+    .countdown-label { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 5px; }
+    .countdown-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.42); z-index: 100; display: flex; align-items: flex-end; }
+    .modal-sheet { background: white; border-radius: 16px 16px 0 0; padding: 20px 16px 36px; width: 100%; max-height: 88vh; overflow-y: auto; }
+    .modal-title { font-size: 17px; font-weight: bold; margin-bottom: 16px; }
+    .modal-footer { display: flex; gap: 8px; margin-top: 6px; }
+    .tabs { display: flex; background: white; border-bottom: 1.5px solid #e2e5e9; overflow-x: auto; }
+    .tab { flex: 0 0 auto; padding: 12px 10px; font-size: 12px; font-weight: bold; color: #aaa; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: color 0.14s, border-color 0.14s; white-space: nowrap; }
+    .tab.active { color: #C8102E; border-bottom-color: #C8102E; }
+    .list-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f3f3; }
+    .list-row:last-child { border-bottom: none; }
+    .list-row-main { font-size: 15px; font-weight: bold; color: #1a1a1a; }
+    .list-row-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .list-row-actions { display: flex; gap: 7px; flex-shrink: 0; }
+    .goal-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f3f3f3; }
+    .goal-row:last-child { border-bottom: none; }
+    .goal-label { font-size: 15px; font-weight: bold; }
+    .goal-input { width: 78px; padding: 8px; text-align: center; font-size: 16px; font-weight: bold; border: 1.5px solid #dce0e5; border-radius: 7px; -webkit-appearance: none; appearance: none; }
+    .goal-input:focus { outline: none; border-color: #C8102E; box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
+    .report-card { cursor: pointer; transition: filter 0.12s; }
+    .report-card:active { filter: brightness(0.97); }
+    .report-meta { font-size: 13px; color: #888; margin-top: 2px; }
+    .report-flags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .flag { font-size: 12px; font-weight: bold; padding: 3px 9px; border-radius: 20px; }
+    .flag-issue   { background: #fde8ec; color: #C8102E; }
+    .flag-stopped { background: #f2f2f2; color: #777; }
+    .section-head { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .loading-msg  { text-align: center; padding: 32px; color: #aaa; font-size: 14px; }
+    .empty-msg    { text-align: center; padding: 20px; color: #bbb; font-size: 14px; }
+    /* Success screen */
+    .success-panels { display: flex; flex-wrap: wrap; min-height: 100vh; }
+    .success-left { flex: 1 1 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 20px; text-align: center; gap: 10px; }
+    .success-right { flex: 1 1 260px; padding: 16px; background: #f8f9fa; border-top: 1px solid #e2e5e9; display: flex; flex-direction: column; gap: 10px; }
+    .success-icon  { font-size: 56px; }
+    .success-title { font-size: 22px; font-weight: bold; color: #1e7e34; }
+    .success-sub   { font-size: 14px; color: #888; }
+    .congrats-box { background: #e8f5e9; border: 1.5px solid #a5d6a7; border-radius: 8px; padding: 12px 16px; }
+    .congrats-title { font-size: 15px; font-weight: bold; color: #1e7e34; }
+    .congrats-sub   { font-size: 13px; color: #2e7d32; margin-top: 3px; }
+    .passdown-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .passdown-pre { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.8; white-space: pre; overflow-x: auto; color: #222; background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px 12px; max-height: 260px; overflow-y: auto; }
+    .copy-btn { display: flex; align-items: center; justify-content: center; gap: 6px; }
+    /* Overview tab */
+    .stat-row { display: flex; gap: 10px; margin-bottom: 11px; }
+    .stat-card { flex: 1; background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; }
+    .stat-big   { font-size: 28px; font-weight: bold; line-height: 1; }
+    .stat-label { font-size: 11px; color: #888; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .scorecard-row { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid #f3f3f3; gap: 10px; }
+    .scorecard-row:last-child { border-bottom: none; }
+    .scorecard-name { font-size: 13px; font-weight: bold; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .scorecard-bar-wrap { width: 60px; height: 7px; background: #eee; border-radius: 4px; flex-shrink: 0; }
+    .scorecard-bar { height: 7px; border-radius: 4px; }
+    .scorecard-pct { font-size: 13px; font-weight: bold; min-width: 38px; text-align: right; }
+    /* Mold edit */
+    .mold-display { font-size: 12px; color: #aaa; margin-top: 3px; }
+    .mold-edit-row { display: flex; gap: 7px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+    .mold-edit-input { flex: 1; min-width: 120px; padding: 7px 10px; border: 1.5px solid #C8102E; border-radius: 6px; font-size: 14px; }
+    /* Submit tab */
+    .submit-intro { text-align: center; padding: 40px 20px; }
+    .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ============================================================
+// CONFIG
+// ============================================================
+const GAS_URL = 'YOUR_GAS_DEPLOYMENT_URL_HERE';
+
+const PRESSES = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
+const DEFAULT_GOALS = { 452:120, 454:100, 462:100, 455:100, 300:100, 501:100, 502:100, 1000:80, 1200:80 };
+const NOT_RUNNING_REASONS = {
+  en: ['No Operator','Press Breakdown','Scheduled to Not Run','Mold Change / Tooling Change','Material Shortage','Waiting on Maintenance','Other'],
+  es: ['Sin Operador','Falla de Prensa','Programada para no operar','Cambio de Molde / Herramienta','Falta de Material','Esperando Mantenimiento','Otro']
+};
+
+const T = {
+  en: {
+    appName:'Molding Report', shift:'2nd Shift', chooseLang:'Choose your language',
+    username:'Username', password:'Password', signIn:'Sign In', logout:'Logout',
+    invalidCreds:'Incorrect username or password.', networkErr:'Connection failed. Check your internet and try again.',
+    loading:'Loading...', saving:'Saving...', reportDate:'Report Date',
+    press:'Press', operator:'Operator', selectOp:'Select operator...',
+    good:'Good', scrap:'Scrap', goal:'Goal', hitPct:'Hit %',
+    notes:'Notes', notesHint:'Describe any issues or observations...',
+    hadIssue:'Press had issues', notRunning:'Not Running',
+    reason:'Reason not running', selectReason:'Select a reason...',
+    submitReport:'Submit Report', sendingIn:'Submitting in', sec:'seconds',
+    undo:'Undo', submitted:'Report Submitted', submittedSub:'Email sent to supervisor.',
+    congrats:'Great shift,', congratsSub:"Tonight's overall hit rate was",
+    copyPassdown:'Copy Passdown', copied:'Copied!', passdown:'Passdown',
+    newReport:'Start New Report', manager:'Manager Menu',
+    overview:'Overview', submit:'Submit', users:'Users', operators:'Operators', goals:'Goals', reports:'Reports',
+    addUser:'Add User', editUser:'Edit User', addOp:'Add Operator', editOp:'Edit Operator',
+    role:'Role', lead:'Lead', managerRole:'Manager', name:'Name', stampNo:'Stamp #',
+    email:'Email', notifyReport:'Send nightly report to this user',
+    save:'Save', cancel:'Cancel', edit:'Edit', delete:'Delete',
+    confirmDel:'Delete this item?', keepPw:'Leave blank to keep current password',
+    defaultGoals:'Default Goals Per Press', saveGoals:'Save Goals', goalsSaved:'Goals saved.',
+    history:'Report History', resend:'Re-send Email', noReports:'No reports submitted yet.',
+    noUsers:'No users yet.', noOps:'No operators yet.', back:'Back',
+    ok:'OK', issue:'Issue', stopped:'Stopped', errOccurred:'An error occurred. Please try again.',
+    submittedBy:'Submitted by', moldNo:'Mold #', moldOptional:'optional',
+    editMold:'Edit Mold #', saveMold:'Save', saveAndResend:'Save & Resend Email', saveQuiet:'Save Quietly',
+    thisWeek:'This Week', opScorecard:'Operator Scorecard', pressPerf:'Press Performance',
+    noWeekData:'No reports this week yet.', totalGood:'Parts Good', overallHit:'Overall Hit',
+    openForm:'Open Report Form', openFormDesc:'Fill out the nightly report as the lead.',
+    switchToEs:'Cambiar a Español', switchToEn:'Switch to English',
+  },
+  es: {
+    appName:'Reporte de Moldeo', shift:'Turno 2', chooseLang:'Elige tu idioma',
+    username:'Usuario', password:'Contraseña', signIn:'Entrar', logout:'Cerrar Sesión',
+    invalidCreds:'Usuario o contraseña incorrectos.', networkErr:'Error de conexión. Verifica tu internet.',
+    loading:'Cargando...', saving:'Guardando...', reportDate:'Fecha del Reporte',
+    press:'Prensa', operator:'Operador', selectOp:'Seleccionar operador...',
+    good:'Bueno', scrap:'Desperdicio', goal:'Meta', hitPct:'Cumplimiento',
+    notes:'Notas', notesHint:'Describe problemas u observaciones...',
+    hadIssue:'La prensa tuvo problemas', notRunning:'No Operando',
+    reason:'Razón', selectReason:'Seleccionar razón...',
+    submitReport:'Enviar Reporte', sendingIn:'Enviando en', sec:'segundos',
+    undo:'Deshacer', submitted:'Reporte Enviado', submittedSub:'Email enviado al supervisor.',
+    congrats:'Buen turno,', congratsSub:'El cumplimiento general fue de',
+    copyPassdown:'Copiar Resumen', copied:'¡Copiado!', passdown:'Resumen',
+    newReport:'Nuevo Reporte', manager:'Menú de Gerencia',
+    overview:'Resumen', submit:'Enviar', users:'Usuarios', operators:'Operadores', goals:'Metas', reports:'Reportes',
+    addUser:'Agregar Usuario', editUser:'Editar Usuario', addOp:'Agregar Operador', editOp:'Editar Operador',
+    role:'Rol', lead:'Líder', managerRole:'Gerente', name:'Nombre', stampNo:'# de Sello',
+    email:'Email', notifyReport:'Enviar reporte nocturno a este usuario',
+    save:'Guardar', cancel:'Cancelar', edit:'Editar', delete:'Eliminar',
+    confirmDel:'¿Eliminar este elemento?', keepPw:'Dejar en blanco para mantener la contraseña',
+    defaultGoals:'Metas por Prensa', saveGoals:'Guardar Metas', goalsSaved:'Metas guardadas.',
+    history:'Historial', resend:'Reenviar Email', noReports:'No hay reportes aún.',
+    noUsers:'Sin usuarios.', noOps:'Sin operadores.', back:'Regresar',
+    ok:'OK', issue:'Problema', stopped:'Parada', errOccurred:'Ocurrió un error. Intenta de nuevo.',
+    submittedBy:'Enviado por', moldNo:'# de Molde', moldOptional:'opcional',
+    editMold:'Editar Molde', saveMold:'Guardar', saveAndResend:'Guardar y Reenviar', saveQuiet:'Guardar',
+    thisWeek:'Esta Semana', opScorecard:'Puntuación de Operadores', pressPerf:'Desempeño de Prensas',
+    noWeekData:'Sin reportes esta semana.', totalGood:'Piezas Buenas', overallHit:'Cumplimiento',
+    openForm:'Abrir Formulario', openFormDesc:'Llena el reporte nocturno como líder.',
+    switchToEs:'Cambiar a Español', switchToEn:'Switch to English',
+  }
+};
+
+function tx(lang, key) { return (T[lang] || T.en)[key] || key; }
+
+function todayStr() {
+  const d = new Date(), y = d.getFullYear(),
+        m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function initPressData(goals, lastReport) {
+  return PRESSES.map(p => {
+    let operatorId='', operatorName='', operatorStamp='', moldNumber='';
+    if (lastReport && lastReport.pressData) {
+      const lp = lastReport.pressData.find(x => x.pressNumber === p);
+      if (lp) { operatorId=lp.operatorId||''; operatorName=lp.operatorName||''; operatorStamp=lp.operatorStamp||''; moldNumber=lp.moldNumber||''; }
+    }
+    return { pressNumber:p, operatorId, operatorName, operatorStamp,
+      good:'', scrap:'', goal:String(goals[p]!=null?goals[p]:100),
+      notes:'', hasIssue:false, isRunning:true, notRunningReason:'', moldNumber };
+  });
+}
+
+function calcHit(good, goal) {
+  const g=parseInt(good,10), gl=parseInt(goal,10);
+  if (!gl || isNaN(g) || g===0) return null;
+  return Math.round((g/gl)*100);
+}
+
+function generatePassdown(pressData) {
+  let lines = 'Molding -\n  (Good / Scrap / Goal)';
+  (pressData||[]).forEach(p => {
+    const g  = p.isRunning ? (parseInt(p.good  ||0,10)) : 0;
+    const sc = p.isRunning ? (parseInt(p.scrap ||0,10)) : 0;
+    const gl = parseInt(p.goal||0,10);
+    let line = `${p.pressNumber} - ( ${g} / ${sc} / ${gl} )`;
+    if (!p.isRunning && p.notRunningReason) line += ` ${p.notRunningReason.toLowerCase()}`;
+    if (p.notes) line += ` — ${p.notes}`;
+    lines += `\n\n${line}`;
+  });
+  return lines;
+}
+
+async function gasCall(action, payload={}) {
+  if (GAS_URL==='YOUR_GAS_DEPLOYMENT_URL_HERE') throw new Error('GAS_URL not configured.');
+  const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action,...payload}) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+function hitColorClass(h) { return h>=90?'hit-good':h>=70?'hit-warn':'hit-bad'; }
+function hitHexColor(h)   { return h>=90?'#1e7e34':h>=70?'#d6820a':'#C8102E'; }
+
+// ============================================================
+// SWITCH
+// ============================================================
+function Switch({ id, checked, onChange }) {
+  return (
+    <label className="sw" htmlFor={id}>
+      <input id={id} type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} />
+      <span className="sw-track"></span>
+    </label>
+  );
+}
+
+// ============================================================
+// LANGUAGE SCREEN
+// ============================================================
+function LanguageScreen({ onSelect }) {
+  return (
+    <div className="lang-screen">
+      <div><div className="lang-logo-accent"></div><div className="lang-logo">nVent Hoffman</div><div className="lang-dept">Molding Department</div></div>
+      <div style={{fontSize:15,color:'#555',textAlign:'center'}}>Choose Language / Elige tu idioma</div>
+      <div className="lang-btns">
+        <button className="lang-btn" onClick={()=>onSelect('en')}>English</button>
+        <button className="lang-btn" onClick={()=>onSelect('es')}>Español</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// LOGIN SCREEN
+// ============================================================
+function LoginScreen({ lang, onLogin, onLangToggle, loading, error }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const submit = () => { if (!username.trim()||!password) return; onLogin(username.trim(), password); };
+  return (
+    <div className="login-screen">
+      <div className="login-box">
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <div className="login-logo-accent"></div>
+          <div className="login-title">nVent Hoffman</div>
+          <div className="login-sub">Molding Report App</div>
+        </div>
+        {error && <div className="alert alert-error">{error}</div>}
+        <div className="card">
+          <div className="field">
+            <label className="field-label" htmlFor="uname">{tx(lang,'username')}</label>
+            <input id="uname" type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+              value={username} onChange={e=>setUsername(e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="pw">{tx(lang,'password')}</label>
+            <input id="pw" type="password" value={password}
+              onChange={e=>setPassword(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&submit()} />
+          </div>
+          <button className="btn btn-red" onClick={submit} disabled={loading}>
+            {loading?tx(lang,'loading'):tx(lang,'signIn')}
+          </button>
+        </div>
+        <button className="lang-switch-btn" onClick={onLangToggle}>
+          {lang==='en'?tx(lang,'switchToEs'):tx(lang,'switchToEn')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PRESS CARD
+// ============================================================
+function PressCard({ data, operators, lang, onChange }) {
+  const { pressNumber, operatorId, good, scrap, goal, notes, hasIssue, isRunning, notRunningReason, moldNumber } = data;
+  const reasons = NOT_RUNNING_REASONS[lang] || NOT_RUNNING_REASONS.en;
+  const hit = isRunning ? calcHit(good, goal) : null;
+  const upd = (field, val) => onChange(pressNumber, field, val);
+
+  const handleOpChange = opId => {
+    const op = operators.find(o=>o.id===opId);
+    upd('operatorId', opId);
+    upd('operatorName', op?op.name:'');
+    upd('operatorStamp', op?op.stampNumber:'');
+  };
+
+  let cardClass = 'card press-card';
+  if (!isRunning) cardClass += ' is-stopped';
+  else cardClass += ' is-running' + (hasIssue?' has-issue':'');
+
+  let badgeClass='press-badge badge-ok', badgeText=tx(lang,'ok');
+  if (!isRunning)    { badgeClass='press-badge badge-stopped'; badgeText=tx(lang,'stopped'); }
+  else if (hasIssue) { badgeClass='press-badge badge-issue';   badgeText=tx(lang,'issue');   }
+
+  return (
+    <div className={cardClass}>
+      <div className="press-card-top">
+        <div className="press-num">{tx(lang,'press')} {pressNumber}</div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span className={badgeClass}>{badgeText}</span>
+          <div className="nr-toggle-wrap">
+            <span className="nr-toggle-label">{tx(lang,'notRunning')}</span>
+            <Switch id={`nr-${pressNumber}`} checked={!isRunning} onChange={v=>upd('isRunning',!v)} />
+          </div>
+        </div>
+      </div>
+
+      <div className="field">
+        <label className="field-label">{tx(lang,'operator')}</label>
+        <select value={operatorId} onChange={e=>handleOpChange(e.target.value)}>
+          <option value="">{tx(lang,'selectOp')}</option>
+          {operators.map(op=><option key={op.id} value={op.id}>{op.name} — #{op.stampNumber}</option>)}
+        </select>
+      </div>
+
+      <div className="field">
+        <label className="field-label">{tx(lang,'moldNo')} <span style={{color:'#bbb',fontWeight:'normal',textTransform:'none',fontSize:10}}>({tx(lang,'moldOptional')})</span></label>
+        <input type="text" value={moldNumber} placeholder="e.g. M-452-A"
+          onChange={e=>upd('moldNumber',e.target.value)} />
+      </div>
+
+      {isRunning ? (
+        <>
+          <div className="field">
+            <div className="three-col">
+              <div>
+                <div className="col-label">{tx(lang,'good')}</div>
+                <input type="text" inputMode="numeric" pattern="[0-9]*" value={good} placeholder="0"
+                  onChange={e=>upd('good',e.target.value.replace(/[^0-9]/g,''))} />
+              </div>
+              <div>
+                <div className="col-label">{tx(lang,'scrap')}</div>
+                <input type="text" inputMode="numeric" pattern="[0-9]*" value={scrap} placeholder="0"
+                  onChange={e=>upd('scrap',e.target.value.replace(/[^0-9]/g,''))} />
+              </div>
+              <div>
+                <div className="col-label">{tx(lang,'goal')}</div>
+                <input type="text" inputMode="numeric" pattern="[0-9]*" value={goal}
+                  onChange={e=>upd('goal',e.target.value.replace(/[^0-9]/g,''))} />
+              </div>
+            </div>
+          </div>
+          {hit!==null && (
+            <div className="hit-row">
+              <span className={`hit-pct ${hitColorClass(hit)}`}>{hit}%</span>
+              <span style={{fontSize:12,color:'#aaa'}}>{tx(lang,'hitPct')}</span>
+            </div>
+          )}
+          <div className="divider" />
+          <div className="toggle-row">
+            <span className="toggle-text">⚠ {tx(lang,'hadIssue')}</span>
+            <Switch id={`iss-${pressNumber}`} checked={hasIssue} onChange={v=>upd('hasIssue',v)} />
+          </div>
+          <div className="field mt-8">
+            <label className="field-label">{tx(lang,'notes')}</label>
+            <textarea value={notes} placeholder={tx(lang,'notesHint')} onChange={e=>upd('notes',e.target.value)} />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="field">
+            <label className="field-label">{tx(lang,'reason')}</label>
+            <select value={notRunningReason} onChange={e=>upd('notRunningReason',e.target.value)}>
+              <option value="">{tx(lang,'selectReason')}</option>
+              {reasons.map(r=><option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label">{tx(lang,'notes')}</label>
+            <textarea value={notes} placeholder={tx(lang,'notesHint')} onChange={e=>upd('notes',e.target.value)} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// UNDO OVERLAY
+// ============================================================
+function UndoOverlay({ countdown, lang, onUndo }) {
+  return (
+    <div className="overlay">
+      <div className="overlay-box">
+        <div className="countdown-num">{countdown}</div>
+        <div className="countdown-label">{tx(lang,'sendingIn')} {countdown} {tx(lang,'sec')}</div>
+        <div className="countdown-sub">{lang==='es'?'Se está enviando tu reporte...':'Your report is being sent...'}</div>
+        <button className="btn btn-outline" onClick={onUndo}>{tx(lang,'undo')}</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// LEAD VIEW
+// ============================================================
+function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabel }) {
+  const [date,        setDate]        = useState(todayStr);
+  const [pressItems,  setPressItems]  = useState(() => initPressData(goals, lastReport));
+  const [submitting,  setSubmitting]  = useState(false);
+  const [countdown,   setCountdown]   = useState(5);
+  const [submitted,   setSubmitted]   = useState(false);
+  const [submittedData,setSubmittedData] = useState(null);
+  const [overallHit,  setOverallHit]  = useState(null);
+  const [submitError, setSubmitError] = useState('');
+  const [copied,      setCopied]      = useState(false);
+  const timerRef   = useRef(null);
+  const payloadRef = useRef(null);
+
+  const handleChange = (pressNum, field, val) =>
+    setPressItems(prev => prev.map(p => p.pressNumber===pressNum ? {...p,[field]:val} : p));
+
+  const handleSubmit = () => {
+    const running = pressItems.filter(p=>p.isRunning);
+    const tGood   = running.reduce((s,p)=>s+(parseInt(p.good,10)||0),0);
+    const tGoal   = running.reduce((s,p)=>s+(parseInt(p.goal,10)||0),0);
+    payloadRef.current = { date, submittedBy:user.username, pressData:pressItems.map(p=>({...p})) };
+    setOverallHit(tGoal>0?Math.round((tGood/tGoal)*100):null);
+    setSubmitError(''); setCountdown(5); setSubmitting(true);
+  };
+
+  useEffect(() => {
+    if (!submitting) return;
+    let cnt=5;
+    timerRef.current = setInterval(() => {
+      cnt-=1; setCountdown(cnt);
+      if (cnt<=0) { clearInterval(timerRef.current); doSubmit(); }
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [submitting]);
+
+  const handleUndo = () => { clearInterval(timerRef.current); setSubmitting(false); setCountdown(5); };
+
+  const doSubmit = async () => {
+    const payload = payloadRef.current;
+    try {
+      const result = await gasCall('submitReport', payload);
+      if (result.success) {
+        setSubmittedData(payload.pressData);
+        setSubmitting(false); setSubmitted(true);
+      } else {
+        setSubmitting(false); setSubmitError(result.error||tx(lang,'errOccurred'));
+      }
+    } catch { setSubmitting(false); setSubmitError(tx(lang,'networkErr')); }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(generatePassdown(submittedData));
+      setCopied(true); setTimeout(()=>setCopied(false),2500);
+    } catch {}
+  };
+
+  const resetForm = () => {
+    setSubmitted(false); setSubmittedData(null);
+    setPressItems(initPressData(goals, lastReport)); setDate(todayStr());
+  };
+
+  if (submitted) {
+    const passText = generatePassdown(submittedData||[]);
+    return (
+      <div className="success-panels">
+        <div className="success-left">
+          <div className="success-icon">✅</div>
+          <div className="success-title">{tx(lang,'submitted')}</div>
+          <div className="success-sub">{tx(lang,'submittedSub')}</div>
+          {overallHit!==null && overallHit>=90 && (
+            <div className="congrats-box">
+              <div className="congrats-title">🏆 {tx(lang,'congrats')} {user.username}!</div>
+              <div className="congrats-sub">{tx(lang,'congratsSub')} {overallHit}%</div>
+            </div>
+          )}
+          <div style={{width:'100%',maxWidth:280,display:'flex',flexDirection:'column',gap:10,marginTop:8}}>
+            <button className="btn btn-red" onClick={resetForm}>{tx(lang,'newReport')}</button>
+            <button className="btn btn-gray" onClick={onLogout}>{backLabel||tx(lang,'logout')}</button>
+          </div>
+        </div>
+        <div className="success-right">
+          <div className="passdown-label">{tx(lang,'passdown')}</div>
+          <pre className="passdown-pre">{passText}</pre>
+          <button className="btn btn-outline copy-btn" onClick={handleCopy}>
+            {copied?`✓ ${tx(lang,'copied')}`:tx(lang,'copyPassdown')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',minHeight:'100vh'}}>
+      <div className="app-header">
+        <div>
+          <div className="header-title">nVent | {tx(lang,'appName')}</div>
+          <div className="header-sub">{tx(lang,'shift')} — {user.username}</div>
+        </div>
+        <button className="header-btn" onClick={onLogout}>{backLabel||tx(lang,'logout')}</button>
+      </div>
+      <div className="date-bar">
+        <span className="date-bar-label">{tx(lang,'reportDate')}</span>
+        <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{flex:1}} />
+      </div>
+      <div className="scroll-area">
+        {submitError && <div className="alert alert-error">{submitError}</div>}
+        {pressItems.map(p=>(
+          <PressCard key={p.pressNumber} data={p} operators={operators} lang={lang} onChange={handleChange} />
+        ))}
+      </div>
+      <div className="bottom-bar">
+        <button className="btn btn-red" onClick={handleSubmit}>{tx(lang,'submitReport')}</button>
+      </div>
+      {submitting && <UndoOverlay countdown={countdown} lang={lang} onUndo={handleUndo} />}
+    </div>
+  );
+}
+
+// ============================================================
+// USER MODAL
+// ============================================================
+function UserModal({ lang, item, onSave, onClose }) {
+  const [username,     setUsername]     = useState(item?item.username:'');
+  const [password,     setPassword]     = useState('');
+  const [role,         setRole]         = useState(item?item.role:'lead');
+  const [email,        setEmail]        = useState(item?item.email||'':'');
+  const [notifyReport, setNotifyReport] = useState(item?item.notifyReport||false:false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  const save = async () => {
+    if (!username.trim()) return;
+    if (!item && !password) return;
+    setSaving(true); setErr('');
+    try {
+      const payload = item
+        ? { id:item.id, username:username.trim(), role, email, notifyReport, ...(password?{password}:{}) }
+        : { username:username.trim(), password, role, email, notifyReport };
+      const result = await gasCall(item?'updateUser':'addUser', payload);
+      if (result.success) { onSave(); }
+      else { setErr(result.error||tx(lang,'errOccurred')); setSaving(false); }
+    } catch { setErr(tx(lang,'networkErr')); setSaving(false); }
+  };
+
+  return (
+    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-sheet">
+        <div className="modal-title">{item?tx(lang,'editUser'):tx(lang,'addUser')}</div>
+        {err && <div className="alert alert-error">{err}</div>}
+        <div className="field">
+          <label className="field-label">{tx(lang,'username')}</label>
+          <input type="text" autoCapitalize="none" value={username} onChange={e=>setUsername(e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field-label">{tx(lang,'password')}{item?` — ${tx(lang,'keepPw')}`:''}</label>
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field-label">{tx(lang,'role')}</label>
+          <select value={role} onChange={e=>setRole(e.target.value)}>
+            <option value="lead">{tx(lang,'lead')}</option>
+            <option value="manager">{tx(lang,'managerRole')}</option>
+          </select>
+        </div>
+        <div className="field">
+          <label className="field-label">{tx(lang,'email')} <span style={{color:'#bbb',fontWeight:'normal',textTransform:'none',fontSize:10}}>(optional)</span></label>
+          <input type="text" autoCapitalize="none" value={email} onChange={e=>setEmail(e.target.value)} placeholder="user@example.com" />
+        </div>
+        <div className="toggle-row" style={{marginBottom:12}}>
+          <span className="toggle-text" style={{fontSize:13}}>{tx(lang,'notifyReport')}</span>
+          <Switch id="notify-sw" checked={notifyReport} onChange={setNotifyReport} />
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-gray" style={{flex:1}} onClick={onClose}>{tx(lang,'cancel')}</button>
+          <button className="btn btn-red"  style={{flex:1}} onClick={save} disabled={saving}>
+            {saving?tx(lang,'saving'):tx(lang,'save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// OPERATOR MODAL
+// ============================================================
+function OperatorModal({ lang, item, onSave, onClose }) {
+  const [name, setName] = useState(item?item.name:'');
+  const [stamp,setStamp]= useState(item?item.stampNumber:'');
+  const [saving, setSaving]=useState(false), [err,setErr]=useState('');
+
+  const save = async () => {
+    if (!name.trim()||!stamp.trim()) return;
+    setSaving(true); setErr('');
+    try {
+      const payload = item?{id:item.id,name:name.trim(),stampNumber:stamp.trim()}:{name:name.trim(),stampNumber:stamp.trim()};
+      const result  = await gasCall(item?'updateOperator':'addOperator', payload);
+      if (result.success) { onSave(); } else { setErr(result.error||tx(lang,'errOccurred')); setSaving(false); }
+    } catch { setErr(tx(lang,'networkErr')); setSaving(false); }
+  };
+
+  return (
+    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-sheet">
+        <div className="modal-title">{item?tx(lang,'editOp'):tx(lang,'addOp')}</div>
+        {err && <div className="alert alert-error">{err}</div>}
+        <div className="field"><label className="field-label">{tx(lang,'name')}</label><input type="text" value={name} onChange={e=>setName(e.target.value)} /></div>
+        <div className="field"><label className="field-label">{tx(lang,'stampNo')}</label><input type="text" value={stamp} onChange={e=>setStamp(e.target.value)} /></div>
+        <div className="modal-footer">
+          <button className="btn btn-gray" style={{flex:1}} onClick={onClose}>{tx(lang,'cancel')}</button>
+          <button className="btn btn-red"  style={{flex:1}} onClick={save} disabled={saving}>{saving?tx(lang,'saving'):tx(lang,'save')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// OVERVIEW TAB
+// ============================================================
+function OverviewTab({ lang }) {
+  const [reports,  setReports]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+
+  useEffect(() => {
+    gasCall('getWeekReports').then(r => { if (r.success) setReports(r.reports); setLoading(false); }).catch(()=>setLoading(false));
+  }, []);
+
+  if (loading) return <div className="loading-msg">{tx(lang,'loading')}</div>;
+  if (!reports.length) return <div className="empty-msg" style={{padding:40}}>{tx(lang,'noWeekData')}</div>;
+
+  const opStats={}, pressStats={};
+  let totalGood=0, totalGoal=0;
+
+  reports.forEach(r => {
+    (r.pressData||[]).forEach(p => {
+      if (!p.isRunning) return;
+      const g=parseInt(p.good||0,10), gl=parseInt(p.goal||0,10);
+      if (!gl) return;
+      totalGood+=g; totalGoal+=gl;
+      if (!pressStats[p.pressNumber]) pressStats[p.pressNumber]={good:0,goal:0};
+      pressStats[p.pressNumber].good+=g; pressStats[p.pressNumber].goal+=gl;
+      if (p.operatorName) {
+        if (!opStats[p.operatorName]) opStats[p.operatorName]={good:0,goal:0};
+        opStats[p.operatorName].good+=g; opStats[p.operatorName].goal+=gl;
+      }
+    });
+  });
+
+  const overall = totalGoal>0?Math.round((totalGood/totalGoal)*100):0;
+
+  const opRanked    = Object.entries(opStats).map(([n,s])=>({name:n,hit:Math.round((s.good/s.goal)*100)})).sort((a,b)=>b.hit-a.hit);
+  const pressRanked = Object.entries(pressStats).map(([p,s])=>({press:p,hit:Math.round((s.good/s.goal)*100)})).sort((a,b)=>b.hit-a.hit);
+
+  return (
+    <>
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-big" style={{color:hitHexColor(overall)}}>{overall}%</div>
+          <div className="stat-label">{tx(lang,'overallHit')}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-big" style={{color:'#1a1a1a'}}>{totalGood.toLocaleString()}</div>
+          <div className="stat-label">{tx(lang,'totalGood')}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-big" style={{color:'#1a1a1a'}}>{reports.length}</div>
+          <div className="stat-label">{tx(lang,'reports')}</div>
+        </div>
+      </div>
+
+      <div className="section-head">{tx(lang,'opScorecard')}</div>
+      <div className="card">
+        {opRanked.map(o=>(
+          <div key={o.name} className="scorecard-row">
+            <div className="scorecard-name">{o.name}</div>
+            <div className="scorecard-bar-wrap"><div className="scorecard-bar" style={{width:`${Math.min(o.hit,100)}%`,background:hitHexColor(o.hit)}}></div></div>
+            <div className="scorecard-pct" style={{color:hitHexColor(o.hit)}}>{o.hit}%</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-head">{tx(lang,'pressPerf')}</div>
+      <div className="card">
+        {pressRanked.map(p=>(
+          <div key={p.press} className="scorecard-row">
+            <div className="scorecard-name">{tx(lang,'press')} {p.press}</div>
+            <div className="scorecard-bar-wrap"><div className="scorecard-bar" style={{width:`${Math.min(p.hit,100)}%`,background:hitHexColor(p.hit)}}></div></div>
+            <div className="scorecard-pct" style={{color:hitHexColor(p.hit)}}>{p.hit}%</div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ============================================================
+// REPORT DETAIL
+// ============================================================
+function ReportDetail({ report, lang, onBack }) {
+  const [resending, setResending] = useState(false);
+  const [msg,       setMsg]       = useState('');
+  const [editingPress, setEditingPress] = useState(null);
+  const [moldInput, setMoldInput] = useState('');
+  const [localData, setLocalData] = useState(report.pressData || []);
+
+  const resend = async () => {
+    setResending(true); setMsg('');
+    try {
+      const result = await gasCall('resendEmail', { reportId:report.id });
+      setMsg(result.success ? 'Email re-sent.' : 'Error: '+(result.error||'Unknown'));
+    } catch { setMsg(tx(lang,'networkErr')); }
+    setResending(false);
+  };
+
+  const startMoldEdit = (pressNumber, currentMold) => {
+    setEditingPress(pressNumber); setMoldInput(currentMold||'');
+  };
+
+  const saveMold = async (resendEmail) => {
+    const pressNumber = editingPress;
+    try {
+      const result = await gasCall('editReport', {
+        reportId: report.id, pressNumber, updates:{ moldNumber: moldInput }, resendEmail
+      });
+      if (result.success) {
+        setLocalData(prev => prev.map(p => String(p.pressNumber)===String(pressNumber) ? {...p,moldNumber:moldInput} : p));
+        setMsg(resendEmail ? 'Saved and email re-sent.' : 'Saved.');
+      } else { setMsg('Error: '+(result.error||'Unknown')); }
+    } catch { setMsg(tx(lang,'networkErr')); }
+    setEditingPress(null);
+  };
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',minHeight:'100vh'}}>
+      <div className="app-header">
+        <div>
+          <div className="header-title">{report.date}</div>
+          <div className="header-sub">{tx(lang,'submittedBy')}: {report.submittedBy}</div>
+        </div>
+        <button className="header-btn" onClick={onBack}>{tx(lang,'back')}</button>
+      </div>
+      <div className="scroll-area">
+        {msg && <div className="alert alert-info">{msg}</div>}
+        <div className="card" style={{marginBottom:11}}>
+          <button className="btn btn-outline" onClick={resend} disabled={resending}>{resending?'...':tx(lang,'resend')}</button>
+        </div>
+        {localData.map(p => {
+          const hit = p.isRunning?calcHit(p.good,p.goal):null;
+          const isEditingThis = editingPress===p.pressNumber||editingPress===String(p.pressNumber);
+          let cardClass = 'card press-card';
+          if (!p.isRunning) cardClass+=' is-stopped';
+          else if (p.hasIssue) cardClass+=' is-running has-issue';
+          else cardClass+=' is-running';
+          return (
+            <div key={p.pressNumber} className={cardClass}>
+              <div className="press-card-top">
+                <div className="press-num">{tx(lang,'press')} {p.pressNumber}</div>
+                <span className={`press-badge ${!p.isRunning?'badge-stopped':p.hasIssue?'badge-issue':'badge-ok'}`}>
+                  {!p.isRunning?tx(lang,'stopped'):p.hasIssue?tx(lang,'issue'):tx(lang,'ok')}
+                </span>
+              </div>
+              <div style={{fontSize:13,color:'#888',marginBottom:6}}>{p.operatorName?`${p.operatorName} — #${p.operatorStamp}`:'—'}</div>
+
+              {/* Mold # with edit */}
+              <div className="mold-display">
+                {tx(lang,'moldNo')}: {p.moldNumber||'—'}
+                <button onClick={()=>startMoldEdit(p.pressNumber, p.moldNumber)}
+                  style={{marginLeft:8,background:'none',border:'none',color:'#C8102E',fontSize:11,cursor:'pointer',fontWeight:'bold'}}>
+                  {tx(lang,'editMold')}
+                </button>
+              </div>
+              {isEditingThis && (
+                <div className="mold-edit-row">
+                  <input className="mold-edit-input" type="text" value={moldInput}
+                    placeholder="e.g. M-452-A" onChange={e=>setMoldInput(e.target.value)} />
+                  <button className="btn-sm btn-sm-gray" onClick={()=>saveMold(false)}>{tx(lang,'saveQuiet')}</button>
+                  <button className="btn-sm btn-sm-green" onClick={()=>saveMold(true)}>{tx(lang,'saveAndResend')}</button>
+                </div>
+              )}
+
+              {p.isRunning ? (
+                <div className="three-col" style={{marginTop:8,marginBottom:4}}>
+                  {[
+                    [tx(lang,'good'),  p.good||0],
+                    [tx(lang,'scrap'), p.scrap||0],
+                    [tx(lang,'hitPct'),hit!==null?hit+'%':'—']
+                  ].map(([label,val],i)=>(
+                    <div key={label} style={{textAlign:'center'}}>
+                      <div className="col-label">{label}</div>
+                      <div style={{fontSize:20,fontWeight:'bold',color:i===2&&hit!==null?hitHexColor(hit):'#1a1a1a'}}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{fontSize:14,color:'#777',marginTop:4}}>{p.notRunningReason||'—'}</div>
+              )}
+              {p.notes&&<div style={{fontSize:13,fontStyle:'italic',color:'#555',marginTop:8,padding:'7px 10px',background:'#f8f8f8',borderRadius:6}}>"{p.notes}"</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MANAGER VIEW
+// ============================================================
+function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onLogout, onOpenSubmit }) {
+  const [tab,           setTab]          = useState('overview');
+  const [users,         setUsers]        = useState([]);
+  const [reports,       setReports]      = useState([]);
+  const [loading,       setLoading]      = useState(false);
+  const [modal,         setModal]        = useState(null);
+  const [selectedReport,setSelectedReport]=useState(null);
+  const [localGoals,    setLocalGoals]   = useState({...goals});
+  const [goalMsg,       setGoalMsg]      = useState('');
+
+  useEffect(() => {
+    if      (tab==='users')   loadUsers();
+    else if (tab==='reports') loadReports();
+    else if (tab==='goals')   setLocalGoals({...goals});
+  }, [tab]);
+
+  const loadUsers    = async () => { setLoading(true); try { const r=await gasCall('getUsers');   if(r.success) setUsers(r.users);     } catch {} setLoading(false); };
+  const loadReports  = async () => { setLoading(true); try { const r=await gasCall('getReports'); if(r.success) setReports(r.reports); } catch {} setLoading(false); };
+  const refreshOps   = async () => { try { const r=await gasCall('getOperators'); if(r.success) setOperators(r.operators); } catch {} };
+
+  const delUser     = async id => { if(!window.confirm(tx(lang,'confirmDel'))) return; await gasCall('deleteUser',{id}); loadUsers(); };
+  const delOperator = async id => { if(!window.confirm(tx(lang,'confirmDel'))) return; await gasCall('deleteOperator',{id}); refreshOps(); };
+
+  const saveGoals = async () => {
+    const arr = PRESSES.map(p=>({press:p,goal:parseInt(localGoals[p],10)||0}));
+    const r = await gasCall('updateGoals',{goals:arr});
+    if (r.success) {
+      const upd={}; PRESSES.forEach(p=>{upd[p]=parseInt(localGoals[p],10)||0;}); setGoals(upd);
+      setGoalMsg(tx(lang,'goalsSaved')); setTimeout(()=>setGoalMsg(''),3000);
+    }
+  };
+
+  if (selectedReport) return <ReportDetail report={selectedReport} lang={lang} onBack={()=>setSelectedReport(null)} />;
+
+  const tabs = ['overview','submit','users','operators','goals','reports'];
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',minHeight:'100vh'}}>
+      <div className="app-header">
+        <div><div className="header-title">nVent | {tx(lang,'manager')}</div><div className="header-sub">{user.username}</div></div>
+        <button className="header-btn" onClick={onLogout}>{tx(lang,'logout')}</button>
+      </div>
+
+      <div className="tabs">
+        {tabs.map(tk=>(
+          <div key={tk} className={`tab ${tab===tk?'active':''}`} onClick={()=>setTab(tk)}>
+            {tx(lang,tk)}
+          </div>
+        ))}
+      </div>
+
+      <div className="scroll-area">
+        {loading && <div className="loading-msg">{tx(lang,'loading')}</div>}
+
+        {/* OVERVIEW */}
+        {tab==='overview' && <OverviewTab lang={lang} />}
+
+        {/* SUBMIT */}
+        {tab==='submit' && (
+          <div className="submit-intro">
+            <div style={{fontSize:40,marginBottom:12}}>📋</div>
+            <div style={{fontSize:16,fontWeight:'bold',marginBottom:8}}>{tx(lang,'openForm')}</div>
+            <div style={{fontSize:14,color:'#888',marginBottom:24}}>{tx(lang,'openFormDesc')}</div>
+            <button className="btn btn-red" style={{maxWidth:280}} onClick={onOpenSubmit}>{tx(lang,'openForm')}</button>
+          </div>
+        )}
+
+        {/* USERS */}
+        {tab==='users' && !loading && (
+          <>
+            <button className="btn btn-red" style={{marginBottom:12}} onClick={()=>setModal({type:'user',item:null})}>+ {tx(lang,'addUser')}</button>
+            <div className="card">
+              {users.length===0&&<div className="empty-msg">{tx(lang,'noUsers')}</div>}
+              {users.map(u=>(
+                <div key={u.id} className="list-row">
+                  <div>
+                    <div className="list-row-main">{u.username}</div>
+                    <div className="list-row-sub">{u.role==='manager'?tx(lang,'managerRole'):tx(lang,'lead')}{u.email?` — ${u.email}`:''}</div>
+                  </div>
+                  <div className="list-row-actions">
+                    <button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'user',item:u})}>{tx(lang,'edit')}</button>
+                    <button className="btn-sm btn-sm-danger" onClick={()=>delUser(u.id)}>{tx(lang,'delete')}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* OPERATORS */}
+        {tab==='operators' && (
+          <>
+            <button className="btn btn-red" style={{marginBottom:12}} onClick={()=>setModal({type:'operator',item:null})}>+ {tx(lang,'addOp')}</button>
+            <div className="card">
+              {operators.length===0&&<div className="empty-msg">{tx(lang,'noOps')}</div>}
+              {operators.map(op=>(
+                <div key={op.id} className="list-row">
+                  <div><div className="list-row-main">{op.name}</div><div className="list-row-sub">{tx(lang,'stampNo')}: {op.stampNumber}</div></div>
+                  <div className="list-row-actions">
+                    <button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'operator',item:op})}>{tx(lang,'edit')}</button>
+                    <button className="btn-sm btn-sm-danger" onClick={()=>delOperator(op.id)}>{tx(lang,'delete')}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* GOALS */}
+        {tab==='goals' && (
+          <>
+            {goalMsg&&<div className="alert alert-success">{goalMsg}</div>}
+            <div className="section-head">{tx(lang,'defaultGoals')}</div>
+            <div className="card">
+              {PRESSES.map(p=>(
+                <div key={p} className="goal-row">
+                  <div className="goal-label">{tx(lang,'press')} {p}</div>
+                  <input className="goal-input" type="text" inputMode="numeric" pattern="[0-9]*"
+                    value={localGoals[p]!=null?localGoals[p]:''}
+                    onChange={e=>setLocalGoals(prev=>({...prev,[p]:e.target.value.replace(/[^0-9]/g,'')}))} />
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-red mt-12" onClick={saveGoals}>{tx(lang,'saveGoals')}</button>
+          </>
+        )}
+
+        {/* REPORTS */}
+        {tab==='reports' && !loading && (
+          <>
+            {reports.length===0&&<div className="empty-msg" style={{padding:32}}>{tx(lang,'noReports')}</div>}
+            {reports.map(r=>{
+              const issues  = (r.pressData||[]).filter(p=>p.hasIssue).length;
+              const stopped = (r.pressData||[]).filter(p=>!p.isRunning).length;
+              return (
+                <div key={r.id} className="card report-card" onClick={()=>setSelectedReport(r)}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <div style={{fontWeight:'bold',fontSize:16}}>{r.date}</div>
+                      <div className="report-meta">{r.submittedBy} — {r.timestamp?new Date(r.timestamp).toLocaleTimeString():''}</div>
+                    </div>
+                    <span style={{color:'#C8102E',fontSize:22,fontWeight:'bold'}}>›</span>
+                  </div>
+                  {(issues>0||stopped>0)&&(
+                    <div className="report-flags">
+                      {issues>0&&<span className="flag flag-issue">⚠ {issues} {issues===1?'issue':'issues'}</span>}
+                      {stopped>0&&<span className="flag flag-stopped">● {stopped} not running</span>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+
+      {modal?.type==='user' && (
+        <UserModal lang={lang} item={modal.item} onSave={()=>{setModal(null);loadUsers();}} onClose={()=>setModal(null)} />
+      )}
+      {modal?.type==='operator' && (
+        <OperatorModal lang={lang} item={modal.item} onSave={()=>{setModal(null);refreshOps();}} onClose={()=>setModal(null)} />
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App() {
+  const [lang,         setLang]        = useState(()=>localStorage.getItem('moldingLang')||null);
+  const [screen,       setScreen]      = useState(()=>localStorage.getItem('moldingLang')?'login':'language');
+  const [user,         setUser]        = useState(null);
+  const [operators,    setOperators]   = useState([]);
+  const [goals,        setGoals]       = useState({...DEFAULT_GOALS});
+  const [lastReport,   setLastReport]  = useState(null);
+  const [loginError,   setLoginError]  = useState('');
+  const [loginLoading, setLoginLoading]= useState(false);
+  const [appLoading,   setAppLoading]  = useState(false);
+
+  const selectLang = l => { localStorage.setItem('moldingLang',l); setLang(l); setScreen('login'); };
+  const toggleLang = () => { const nl=lang==='en'?'es':'en'; localStorage.setItem('moldingLang',nl); setLang(nl); setLoginError(''); };
+
+  const handleLogin = async (username, password) => {
+    setLoginError(''); setLoginLoading(true);
+    try {
+      const result = await gasCall('login',{username,password});
+      if (result.success) {
+        setUser(result.user); setLoginLoading(false); setAppLoading(true);
+        const [opRes, goalRes, lastRes] = await Promise.all([
+          gasCall('getOperators'), gasCall('getGoals'), gasCall('getLastReport')
+        ]);
+        if (opRes.success)   setOperators(opRes.operators);
+        if (goalRes.success) setGoals(prev=>{ const m={...prev}; Object.keys(goalRes.goals).forEach(k=>{m[parseInt(k,10)]=parseInt(goalRes.goals[k],10);}); return m; });
+        if (lastRes.success) setLastReport(lastRes.report);
+        setAppLoading(false);
+        setScreen(result.user.role==='manager'?'manager':'lead');
+      } else { setLoginError(tx(lang||'en','invalidCreds')); setLoginLoading(false); }
+    } catch { setLoginError(tx(lang||'en','networkErr')); setLoginLoading(false); }
+  };
+
+  const handleLogout = () => { setUser(null); setLoginError(''); setScreen('login'); };
+
+  if (appLoading) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'white'}}>
+      <div style={{textAlign:'center',color:'#aaa'}}>
+        <div style={{width:36,height:4,background:'#C8102E',margin:'0 auto 16px',borderRadius:2}}></div>
+        {tx(lang||'en','loading')}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="app-wrap">
+      {screen==='language' && <LanguageScreen onSelect={selectLang} />}
+      {screen==='login' && (
+        <LoginScreen lang={lang||'en'} onLogin={handleLogin} onLangToggle={toggleLang} loading={loginLoading} error={loginError} />
+      )}
+      {screen==='lead' && user && (
+        <LeadView lang={lang} user={user} operators={operators} goals={goals} lastReport={lastReport} onLogout={handleLogout} />
+      )}
+      {screen==='manager' && user && (
+        <ManagerView lang={lang} user={user} operators={operators} setOperators={setOperators}
+          goals={goals} setGoals={setGoals} onLogout={handleLogout}
+          onOpenSubmit={()=>setScreen('managerSubmit')} />
+      )}
+      {screen==='managerSubmit' && user && (
+        <LeadView lang={lang} user={user} operators={operators} goals={goals} lastReport={lastReport}
+          onLogout={()=>setScreen('manager')} backLabel={tx(lang,'back')} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
