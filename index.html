@@ -399,7 +399,7 @@ function PressCard({ data, operators, lang, onChange }) {
 
       <div className="field">
         <label className="field-label">{tx(lang,'moldNo')} <span style={{color:'#bbb',fontWeight:'normal',textTransform:'none',fontSize:10}}>({tx(lang,'moldOptional')})</span></label>
-        <input type="text" value={moldNumber} placeholder="e.g. M-452-A"
+        <input type="text" value={moldNumber} placeholder="e.g. VJ808BASE"
           onChange={e=>upd('moldNumber',e.target.value)} />
       </div>
 
@@ -854,7 +854,7 @@ function ReportDetail({ report, lang, onBack }) {
               {isEditingThis && (
                 <div className="mold-edit-row">
                   <input className="mold-edit-input" type="text" value={moldInput}
-                    placeholder="e.g. M-452-A" onChange={e=>setMoldInput(e.target.value)} />
+                    placeholder="e.g. VJ806BASE" onChange={e=>setMoldInput(e.target.value)} />
                   <button className="btn-sm btn-sm-gray" onClick={()=>saveMold(false)}>{tx(lang,'saveQuiet')}</button>
                   <button className="btn-sm btn-sm-green" onClick={()=>saveMold(true)}>{tx(lang,'saveAndResend')}</button>
                 </div>
