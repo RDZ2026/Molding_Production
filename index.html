@@ -12,17 +12,13 @@
     html, body, #root { height: 100%; }
     body { font-family: Arial, Helvetica, sans-serif; background: #f0f2f4; color: #1a1a1a; }
     .app-wrap { max-width: 520px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-
-    /* Header */
     .app-header { background: #C8102E; color: white; padding: 13px 18px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 6px rgba(0,0,0,0.2); flex-shrink: 0; }
     .header-title { font-size: 16px; font-weight: bold; line-height: 1.25; }
-    .header-sub   { font-size: 11px; opacity: 0.8; margin-top: 2px; }
-    .header-btn   { background: none; border: 1.5px solid rgba(255,255,255,0.55); color: white; font-size: 13px; font-weight: bold; padding: 5px 11px; border-radius: 5px; cursor: pointer; }
+    .header-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+    .header-btn { background: none; border: 1.5px solid rgba(255,255,255,0.55); color: white; font-size: 13px; font-weight: bold; padding: 5px 11px; border-radius: 5px; cursor: pointer; }
     .date-bar { background: white; border-bottom: 1px solid #e2e5e9; padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .date-bar-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
     .scroll-area { flex: 1; overflow-y: auto; padding: 12px 12px 88px; -webkit-overflow-scrolling: touch; }
-
-    /* Cards */
     .card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .press-card { border-left: 5px solid #d0d4d9; }
     .press-card.is-running  { border-left-color: #28a745; }
@@ -36,24 +32,20 @@
     .badge-stopped { background: #f2f2f2; color: #777; }
     .nr-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .nr-toggle-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; font-weight: bold; }
-
-    /* Switch */
     .sw { position: relative; width: 44px; height: 25px; flex-shrink: 0; cursor: pointer; }
     .sw input { opacity: 0; width: 0; height: 0; }
     .sw-track { position: absolute; inset: 0; background: #ccc; border-radius: 25px; transition: 0.18s; }
     .sw-track::before { content: ''; position: absolute; width: 19px; height: 19px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.18s; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
     .sw input:checked + .sw-track { background: #C8102E; }
     .sw input:checked + .sw-track::before { transform: translateX(19px); }
-
-    /* Form */
     .field { margin-bottom: 11px; }
     .field-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; display: block; }
-    input[type="text"], input[type="password"], input[type="date"], input[type="number"], select, textarea {
+    input[type="text"], input[type="password"], input[type="date"], select, textarea {
       width: 100%; padding: 10px 11px; border: 1.5px solid #dce0e5; border-radius: 7px;
       font-size: 16px; color: #1a1a1a; background: white; -webkit-appearance: none; appearance: none; transition: border-color 0.14s;
     }
     input:focus, select:focus, textarea:focus { outline: none; border-color: #C8102E; box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
-    textarea { min-height: 68px; resize: vertical; line-height: 1.45; }
+    textarea { min-height: 80px; resize: vertical; line-height: 1.45; }
     .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
     .three-col input { text-align: center; font-weight: bold; padding: 10px 6px; }
     .col-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.4px; text-align: center; margin-bottom: 4px; }
@@ -63,8 +55,6 @@
     .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
     .toggle-text { font-size: 14px; color: #444; }
     .divider { height: 1px; background: #f0f0f0; margin: 9px 0; }
-
-    /* Buttons */
     .btn { display: block; width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; border: none; cursor: pointer; text-align: center; transition: filter 0.12s; }
     .btn:active { filter: brightness(0.9); }
     .btn-red     { background: #C8102E; color: white; }
@@ -74,9 +64,8 @@
     .btn-sm-gray   { background: #eaecef; color: #444; }
     .btn-sm-danger { background: #fde8ec; color: #C8102E; border: 1.5px solid #f5bdc8; }
     .btn-sm-green  { background: #e6f4ea; color: #1e7e34; border: 1.5px solid #a5d6a7; }
+    .btn-sm-amber  { background: #fff8e1; color: #b45309; border: 1.5px solid #fcd34d; }
     .bottom-bar { position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e5e9; padding: 11px 14px; z-index: 40; flex-shrink: 0; }
-
-    /* Screens */
     .lang-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px 24px; gap: 24px; background: white; }
     .lang-logo-accent { width: 40px; height: 4px; background: #C8102E; border-radius: 2px; margin: 0 auto 14px; }
     .lang-logo { font-size: 24px; font-weight: bold; text-align: center; }
@@ -90,30 +79,21 @@
     .login-title { font-size: 22px; font-weight: bold; text-align: center; }
     .login-sub { font-size: 13px; color: #888; text-align: center; margin-top: 5px; }
     .lang-switch-btn { display: block; margin: 14px auto 0; background: none; border: none; color: #bbb; font-size: 13px; cursor: pointer; }
-
-    /* Alerts */
     .alert { padding: 11px 13px; border-radius: 7px; font-size: 14px; margin-bottom: 12px; }
     .alert-error   { background: #fde8ec; color: #a3001a; }
     .alert-success { background: #e6f4ea; color: #155724; }
     .alert-info    { background: #e8f0fe; color: #1a4dc3; }
-
-    /* Overlay / countdown */
+    .alert-warn    { background: #fff8e1; color: #92400e; }
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; }
     .overlay-box { background: white; border-radius: 14px; padding: 28px 22px; text-align: center; width: 100%; max-width: 300px; }
     .countdown-num { width: 76px; height: 76px; border-radius: 50%; background: #C8102E; color: white; font-size: 36px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
-
-    /* Modal */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.42); z-index: 100; display: flex; align-items: flex-end; }
     .modal-sheet { background: white; border-radius: 16px 16px 0 0; padding: 20px 16px 36px; width: 100%; max-height: 88vh; overflow-y: auto; }
     .modal-title { font-size: 17px; font-weight: bold; margin-bottom: 16px; }
     .modal-footer { display: flex; gap: 8px; margin-top: 6px; }
-
-    /* Tabs (mobile) */
     .tabs { display: flex; background: white; border-bottom: 1.5px solid #e2e5e9; overflow-x: auto; flex-shrink: 0; }
     .tab { flex: 0 0 auto; padding: 12px 10px; font-size: 12px; font-weight: bold; color: #aaa; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
     .tab.active { color: #C8102E; border-bottom-color: #C8102E; }
-
-    /* Lists */
     .list-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f3f3; }
     .list-row:last-child { border-bottom: none; }
     .list-row-main { font-size: 15px; font-weight: bold; }
@@ -123,9 +103,7 @@
     .goal-row:last-child { border-bottom: none; }
     .goal-label { font-size: 15px; font-weight: bold; }
     .goal-input { width: 78px; padding: 8px; text-align: center; font-size: 16px; font-weight: bold; border: 1.5px solid #dce0e5; border-radius: 7px; }
-    .goal-input:focus { outline: none; border-color: #C8102E; box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
-
-    /* Reports */
+    .goal-input:focus { outline: none; border-color: #C8102E; }
     .report-card { cursor: pointer; }
     .report-card:active { filter: brightness(0.97); }
     .report-meta  { font-size: 13px; color: #888; margin-top: 2px; }
@@ -133,8 +111,6 @@
     .flag { font-size: 12px; font-weight: bold; padding: 3px 9px; border-radius: 20px; }
     .flag-issue   { background: #fde8ec; color: #C8102E; }
     .flag-stopped { background: #f2f2f2; color: #777; }
-
-    /* Success */
     .success-panels { display: flex; flex-wrap: wrap; min-height: 100vh; }
     .success-left  { flex: 1 1 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 20px; text-align: center; gap: 10px; }
     .success-right { flex: 1 1 260px; padding: 16px; background: #f8f9fa; border-top: 1px solid #e2e5e9; display: flex; flex-direction: column; gap: 10px; }
@@ -146,8 +122,6 @@
     .congrats-sub   { font-size: 13px; color: #2e7d32; margin-top: 3px; }
     .passdown-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
     .passdown-pre   { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.8; white-space: pre; overflow-x: auto; color: #222; background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px 12px; max-height: 260px; overflow-y: auto; }
-
-    /* Overview */
     .stat-row  { display: flex; gap: 10px; margin-bottom: 11px; }
     .stat-card { flex: 1; background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; }
     .stat-big  { font-size: 28px; font-weight: bold; line-height: 1; }
@@ -158,57 +132,56 @@
     .scorecard-bar-wrap { width: 56px; height: 7px; background: #eee; border-radius: 4px; flex-shrink: 0; }
     .scorecard-bar { height: 7px; border-radius: 4px; }
     .scorecard-pct { font-size: 13px; font-weight: bold; min-width: 40px; text-align: right; }
-
-    /* Period filter */
     .period-filter { display: flex; background: #eaecef; border-radius: 8px; padding: 3px; margin-bottom: 14px; gap: 2px; }
     .period-btn { flex: 1; padding: 8px 4px; border: none; background: none; border-radius: 6px; font-size: 12px; font-weight: bold; color: #888; cursor: pointer; }
     .period-btn.active { background: white; color: #C8102E; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
-
-    /* Mold edit */
     .mold-display { font-size: 12px; color: #aaa; margin-top: 3px; }
     .mold-edit-row { display: flex; gap: 7px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
     .mold-edit-input { flex: 1; min-width: 120px; padding: 7px 10px; border: 1.5px solid #C8102E; border-radius: 6px; font-size: 14px; }
-
-    /* Submit tab */
     .submit-intro { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; gap: 10px; }
-
-    /* Misc */
     .section-head { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
     .loading-msg  { text-align: center; padding: 32px; color: #aaa; font-size: 14px; }
     .empty-msg    { text-align: center; padding: 20px; color: #bbb; font-size: 14px; }
+    /* Molder profiles */
+    .molder-badge { font-size: 14px; padding: 2px 6px; border-radius: 12px; font-weight: bold; }
+    .badge-fire    { background: #fef3c7; color: #92400e; }
+    .badge-concern { background: #fde8ec; color: #C8102E; }
+    .star-btn { background: none; border: none; cursor: pointer; font-size: 22px; padding: 2px; line-height: 1; }
+    .note-card { background: #f8f9fa; border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .note-meta { font-size: 11px; color: #aaa; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .note-text { font-size: 14px; color: #333; line-height: 1.5; }
+    /* Overview alerts */
+    .alert-section { border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .alert-section-concern { background: #fde8ec; border: 1.5px solid #f5bdc8; }
+    .alert-section-fire    { background: #e8f5e9; border: 1.5px solid #a5d6a7; }
+    .alert-section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .alert-names { font-size: 14px; font-weight: bold; }
+    /* Week table */
+    .week-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .week-table th { padding: 8px; background: #f5f5f5; font-weight: bold; font-size: 11px; text-transform: uppercase; color: #888; border-bottom: 1px solid #eee; text-align: left; }
+    .week-table td { padding: 8px; border-bottom: 1px solid #f3f3f3; }
+    .week-table tr:last-child td { border-bottom: none; }
+    /* Archived section */
+    .archived-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f5f5f5; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
+    .archived-toggle-label { font-size: 13px; font-weight: bold; color: #888; }
     .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; }
-
-    /* ========== DESKTOP ========== */
+    /* Desktop */
     @media (min-width: 768px) {
       .app-wrap { max-width: 100%; max-width: 1100px; }
-
-      /* Lead: press cards in 2-column grid */
       .press-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-      /* Success panels side by side */
       .success-right { border-top: none; border-left: 1px solid #e2e5e9; min-height: 100vh; }
-
-      /* Manager: hide mobile tabs, show sidebar */
       .mgr-tabs-mobile { display: none; }
       .mgr-body { display: flex; flex: 1; overflow: hidden; }
       .mgr-sidebar { width: 190px; background: white; border-right: 1px solid #e2e5e9; overflow-y: auto; padding: 10px 0; flex-shrink: 0; }
       .mgr-sidebar-btn { display: block; width: 100%; text-align: left; padding: 12px 22px; font-size: 14px; font-weight: bold; background: none; border: none; border-left: 3px solid transparent; color: #888; cursor: pointer; }
       .mgr-sidebar-btn.active { color: #C8102E; border-left-color: #C8102E; background: rgba(200,16,46,0.05); }
       .mgr-content { flex: 1; overflow-y: auto; padding: 22px 28px 60px; }
-
-      /* Scorecard two-column */
       .scorecard-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .scorecard-cols .card { margin-bottom: 0; }
-
-      /* Wider modal */
       .modal-bg { align-items: center; justify-content: center; }
       .modal-sheet { border-radius: 12px; max-width: 480px; padding: 24px; }
-
-      /* Date bar on desktop */
-      .date-bar { padding: 12px 24px; }
       .scroll-area { padding: 16px 24px 88px; }
     }
-
     @media (max-width: 767px) {
       .mgr-body { display: flex; flex-direction: column; flex: 1; }
       .mgr-sidebar { display: none; }
@@ -222,7 +195,6 @@
 const { useState, useEffect, useRef } = React;
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwEYnjO0kYr_Q6akgbjl7ILywxPNMYm-bk4Ee1jjOr9_8T4bb-4b3SydeBNfulZajxo/exec';
-
 const PRESSES = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
 const DEFAULT_GOALS = { 452:120, 454:100, 462:100, 455:100, 300:100, 501:100, 502:100, 1000:80, 1200:80 };
 const NOT_RUNNING_REASONS = {
@@ -232,72 +204,92 @@ const NOT_RUNNING_REASONS = {
 
 const T = {
   en: {
-    appName:'Molding Report', shift:'2nd Shift', chooseLang:'Choose your language',
-    username:'Username', password:'Password', signIn:'Sign In', logout:'Logout',
-    invalidCreds:'Incorrect username or password.', networkErr:'Connection failed. Check your internet.',
-    loading:'Loading...', saving:'Saving...', reportDate:'Report Date',
-    press:'Press', operator:'Operator', selectOp:'Select operator...',
-    good:'Good', scrap:'Scrap', goal:'Goal', hitPct:'Hit %',
-    notes:'Notes', notesHint:'Describe any issues or observations...',
-    hadIssue:'Press had issues', notRunning:'Not Running',
-    reason:'Reason not running', selectReason:'Select a reason...',
-    submitReport:'Submit Report', sendingIn:'Submitting in', sec:'seconds',
-    undo:'Undo', submitted:'Report Submitted', submittedSub:'Email sent to supervisor.',
-    congrats:'Great shift,', congratsSub:"Tonight's overall hit rate was",
-    copyPassdown:'Copy Passdown', copied:'Copied!', passdown:'Passdown',
-    newReport:'Start New Report', manager:'Manager Menu',
-    overview:'Overview', submit:'Submit', users:'Users', operators:'Operators', goals:'Goals', reports:'Reports',
-    addUser:'Add User', editUser:'Edit User', addOp:'Add Operator', editOp:'Edit Operator',
-    role:'Role', lead:'Lead', managerRole:'Manager', name:'Name', stampNo:'Stamp #',
-    email:'Email', notifyReport:'Send nightly report to this user',
-    save:'Save', cancel:'Cancel', edit:'Edit', delete:'Delete',
-    confirmDel:'Delete this item?', keepPw:'Leave blank to keep current password',
-    defaultGoals:'Default Goals Per Press', saveGoals:'Save Goals', goalsSaved:'Goals saved.',
-    history:'Report History', resend:'Re-send Email', noReports:'No reports submitted yet.',
-    noUsers:'No users yet.', noOps:'No operators yet.', back:'Back',
-    ok:'OK', issue:'Issue', stopped:'Stopped', errOccurred:'An error occurred. Please try again.',
-    submittedBy:'Submitted by', moldNo:'Mold #', moldOptional:'optional',
-    editMold:'Edit', saveQuiet:'Save Quietly', saveAndResend:'Save & Resend',
-    thisWeek:'This Week', lastWeek:'Last Week', thisMonth:'Month',
-    opScorecard:'Operator Scorecard', pressPerf:'Press Performance',
-    noWeekData:'No reports for this period.', totalGood:'Parts Good', overallHit:'Overall Hit',
-    bestDay:'Best Day', worstDay:'Worst Day', dailyPerf:'Daily Performance', prodVsGoal:'Production vs Goal',
-    openForm:'Open Report Form', openFormDesc:'Fill out the nightly report as the lead.',
-    switchToEs:'Cambiar a Español', switchToEn:'Switch to English',
+    appName:'Molding Report',shift:'2nd Shift',chooseLang:'Choose your language',
+    username:'Username',password:'Password',signIn:'Sign In',logout:'Logout',
+    invalidCreds:'Incorrect username or password.',networkErr:'Connection failed.',
+    loading:'Loading...',saving:'Saving...',reportDate:'Report Date',
+    press:'Press',operator:'Operator',selectOp:'Select operator...',
+    good:'Good',scrap:'Scrap',goal:'Goal',hitPct:'Hit %',
+    notes:'Notes',notesHint:'Describe any issues or observations...',
+    hadIssue:'Press had issues',notRunning:'Not Running',
+    reason:'Reason not running',selectReason:'Select a reason...',
+    submitReport:'Submit Report',sendingIn:'Submitting in',sec:'seconds',
+    undo:'Undo',submitted:'Report Submitted',submittedSub:'Email sent to supervisor.',
+    congrats:'Great shift,',congratsSub:"Tonight's overall hit rate was",
+    copyPassdown:'Copy Passdown',copied:'Copied!',passdown:'Passdown',
+    newReport:'Start New Report',manager:'Manager Menu',
+    overview:'Overview',molders:'Molders',submit:'Submit',users:'Users',operators:'Operators',goals:'Goals',reports:'Reports',
+    addUser:'Add User',editUser:'Edit User',addOp:'Add Operator',editOp:'Edit Operator',
+    role:'Role',lead:'Lead',managerRole:'Manager',name:'Name',stampNo:'Stamp #',
+    email:'Email',notifyReport:'Send nightly report to this user',
+    save:'Save',cancel:'Cancel',edit:'Edit',delete:'Delete',
+    confirmDel:'Delete this item?',keepPw:'Leave blank to keep current password',
+    defaultGoals:'Default Goals Per Press',saveGoals:'Save Goals',goalsSaved:'Goals saved.',
+    history:'Report History',resend:'Re-send Email',noReports:'No reports yet.',
+    noUsers:'No users yet.',noOps:'No operators yet.',back:'Back',
+    ok:'OK',issue:'Issue',stopped:'Stopped',errOccurred:'An error occurred.',
+    submittedBy:'Submitted by',moldNo:'Mold #',moldOptional:'optional',
+    editMold:'Edit',saveQuiet:'Save Quietly',saveAndResend:'Save & Resend',
+    thisWeek:'This Week',lastWeek:'Last Week',thisMonth:'Month',allTime:'All Time',
+    opScorecard:'Operator Scorecard',pressPerf:'Press Performance',
+    noWeekData:'No reports for this period.',totalGood:'Parts Good',overallHit:'Overall Hit',
+    bestDay:'Best Day',worstDay:'Worst Day',dailyPerf:'Daily Performance',prodVsGoal:'Production vs Goal',
+    openForm:'Open Report Form',openFormDesc:'Fill out the nightly report as the lead.',
+    archiveReport:'Archive Report',archived:'Archived',archivedReports:'Archived Reports',
+    restore:'Restore',noArchived:'No archived reports.',confirmArchive:'Archive this report?',
+    molderProfiles:'Molder Profiles',nightsWorked:'Nights',avgHitRate:'Avg Hit',issueRate:'Issues',
+    concernFlag:'Needs Attention',onFireFlag:'Outstanding',lastReviewed:'Last reviewed',
+    pressBrk:'Press Breakdown',weeklySum:'Weekly Summary',oneOnOneNotes:'1:1 Notes',
+    addNote:'Add Note',noNotes:'No notes yet. Add your first 1:1 note.',
+    rating:'Rating',notePlaceholder:'Enter your observation or 1:1 feedback...',
+    saveNote:'Save Note',exportProfile:'Export',visibleToMolder:'Profile visible to molder',
+    trendChart:'Performance Trend (last 30 nights)',weekOf:'Week of',
+    noMolderData:'No production data for this molder in this period.',
+    switchToEs:'Cambiar a Español',switchToEn:'Switch to English',
   },
   es: {
-    appName:'Reporte de Moldeo', shift:'Turno 2', chooseLang:'Elige tu idioma',
-    username:'Usuario', password:'Contraseña', signIn:'Entrar', logout:'Cerrar Sesión',
-    invalidCreds:'Usuario o contraseña incorrectos.', networkErr:'Error de conexión.',
-    loading:'Cargando...', saving:'Guardando...', reportDate:'Fecha del Reporte',
-    press:'Prensa', operator:'Operador', selectOp:'Seleccionar operador...',
-    good:'Bueno', scrap:'Desperdicio', goal:'Meta', hitPct:'Cumplimiento',
-    notes:'Notas', notesHint:'Describe problemas u observaciones...',
-    hadIssue:'La prensa tuvo problemas', notRunning:'No Operando',
-    reason:'Razón', selectReason:'Seleccionar razón...',
-    submitReport:'Enviar Reporte', sendingIn:'Enviando en', sec:'segundos',
-    undo:'Deshacer', submitted:'Reporte Enviado', submittedSub:'Email enviado al supervisor.',
-    congrats:'Buen turno,', congratsSub:'El cumplimiento general fue de',
-    copyPassdown:'Copiar Resumen', copied:'¡Copiado!', passdown:'Resumen',
-    newReport:'Nuevo Reporte', manager:'Menú de Gerencia',
-    overview:'Resumen', submit:'Enviar', users:'Usuarios', operators:'Operadores', goals:'Metas', reports:'Reportes',
-    addUser:'Agregar Usuario', editUser:'Editar Usuario', addOp:'Agregar Operador', editOp:'Editar Operador',
-    role:'Rol', lead:'Líder', managerRole:'Gerente', name:'Nombre', stampNo:'# de Sello',
-    email:'Email', notifyReport:'Enviar reporte nocturno a este usuario',
-    save:'Guardar', cancel:'Cancelar', edit:'Editar', delete:'Eliminar',
-    confirmDel:'¿Eliminar este elemento?', keepPw:'Dejar en blanco para mantener la contraseña',
-    defaultGoals:'Metas por Prensa', saveGoals:'Guardar Metas', goalsSaved:'Metas guardadas.',
-    history:'Historial', resend:'Reenviar Email', noReports:'No hay reportes aún.',
-    noUsers:'Sin usuarios.', noOps:'Sin operadores.', back:'Regresar',
-    ok:'OK', issue:'Problema', stopped:'Parada', errOccurred:'Ocurrió un error.',
-    submittedBy:'Enviado por', moldNo:'# Molde', moldOptional:'opcional',
-    editMold:'Editar', saveQuiet:'Guardar', saveAndResend:'Guardar y Reenviar',
-    thisWeek:'Esta Semana', lastWeek:'Semana Pasada', thisMonth:'Mes',
-    opScorecard:'Operadores', pressPerf:'Prensas',
-    noWeekData:'Sin reportes en este período.', totalGood:'Piezas Buenas', overallHit:'Cumplimiento',
-    bestDay:'Mejor Día', worstDay:'Peor Día', dailyPerf:'Desempeño Diario', prodVsGoal:'Producción vs Meta',
-    openForm:'Abrir Formulario', openFormDesc:'Llena el reporte nocturno como líder.',
-    switchToEs:'Cambiar a Español', switchToEn:'Switch to English',
+    appName:'Reporte de Moldeo',shift:'Turno 2',chooseLang:'Elige tu idioma',
+    username:'Usuario',password:'Contraseña',signIn:'Entrar',logout:'Cerrar Sesión',
+    invalidCreds:'Usuario o contraseña incorrectos.',networkErr:'Error de conexión.',
+    loading:'Cargando...',saving:'Guardando...',reportDate:'Fecha del Reporte',
+    press:'Prensa',operator:'Operador',selectOp:'Seleccionar operador...',
+    good:'Bueno',scrap:'Desperdicio',goal:'Meta',hitPct:'Cumplimiento',
+    notes:'Notas',notesHint:'Describe problemas u observaciones...',
+    hadIssue:'La prensa tuvo problemas',notRunning:'No Operando',
+    reason:'Razón',selectReason:'Seleccionar razón...',
+    submitReport:'Enviar Reporte',sendingIn:'Enviando en',sec:'segundos',
+    undo:'Deshacer',submitted:'Reporte Enviado',submittedSub:'Email enviado al supervisor.',
+    congrats:'Buen turno,',congratsSub:'El cumplimiento fue de',
+    copyPassdown:'Copiar Resumen',copied:'¡Copiado!',passdown:'Resumen',
+    newReport:'Nuevo Reporte',manager:'Menú de Gerencia',
+    overview:'Resumen',molders:'Operadores',submit:'Enviar',users:'Usuarios',operators:'Operadores',goals:'Metas',reports:'Reportes',
+    addUser:'Agregar Usuario',editUser:'Editar Usuario',addOp:'Agregar Operador',editOp:'Editar Operador',
+    role:'Rol',lead:'Líder',managerRole:'Gerente',name:'Nombre',stampNo:'# de Sello',
+    email:'Email',notifyReport:'Enviar reporte nocturno',
+    save:'Guardar',cancel:'Cancelar',edit:'Editar',delete:'Eliminar',
+    confirmDel:'¿Eliminar?',keepPw:'Dejar en blanco para mantener contraseña',
+    defaultGoals:'Metas por Prensa',saveGoals:'Guardar Metas',goalsSaved:'Metas guardadas.',
+    history:'Historial',resend:'Reenviar Email',noReports:'No hay reportes.',
+    noUsers:'Sin usuarios.',noOps:'Sin operadores.',back:'Regresar',
+    ok:'OK',issue:'Problema',stopped:'Parada',errOccurred:'Ocurrió un error.',
+    submittedBy:'Enviado por',moldNo:'# Molde',moldOptional:'opcional',
+    editMold:'Editar',saveQuiet:'Guardar',saveAndResend:'Guardar y Reenviar',
+    thisWeek:'Esta Semana',lastWeek:'Semana Pasada',thisMonth:'Mes',allTime:'Todo',
+    opScorecard:'Operadores',pressPerf:'Prensas',
+    noWeekData:'Sin reportes.',totalGood:'Piezas Buenas',overallHit:'Cumplimiento',
+    bestDay:'Mejor Día',worstDay:'Peor Día',dailyPerf:'Desempeño Diario',prodVsGoal:'Producción vs Meta',
+    openForm:'Abrir Formulario',openFormDesc:'Llena el reporte nocturno.',
+    archiveReport:'Archivar',archived:'Archivado',archivedReports:'Reportes Archivados',
+    restore:'Restaurar',noArchived:'Sin reportes archivados.',confirmArchive:'¿Archivar este reporte?',
+    molderProfiles:'Perfiles',nightsWorked:'Noches',avgHitRate:'Cumpl.',issueRate:'Problemas',
+    concernFlag:'Atención',onFireFlag:'Destacado',lastReviewed:'Revisado',
+    pressBrk:'Por Prensa',weeklySum:'Por Semana',oneOnOneNotes:'Notas 1:1',
+    addNote:'Agregar Nota',noNotes:'Sin notas aún.',
+    rating:'Puntuación',notePlaceholder:'Observación o retroalimentación...',
+    saveNote:'Guardar Nota',exportProfile:'Exportar',visibleToMolder:'Perfil visible al operador',
+    trendChart:'Tendencia (últimas 30 noches)',weekOf:'Semana del',
+    noMolderData:'Sin datos para este período.',
+    switchToEs:'Cambiar a Español',switchToEn:'Switch to English',
   }
 };
 
@@ -308,11 +300,32 @@ function todayStr() {
   return `${y}-${m}-${day}`;
 }
 
+function formatDateTime(ts) {
+  if (!ts) return '—';
+  try {
+    const d=new Date(ts);
+    if (isNaN(d.getTime())) return ts;
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let h=d.getHours(), mins=String(d.getMinutes()).padStart(2,'0');
+    const ampm=h>=12?'PM':'AM'; h=h%12||12;
+    return `${months[d.getMonth()]} ${d.getDate()} · ${h}:${mins} ${ampm}`;
+  } catch { return ts; }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const parts=dateStr.split('-');
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(parts[1],10)-1]} ${parseInt(parts[2],10)}`;
+  } catch { return dateStr; }
+}
+
 function initPressData(goals, lastReport) {
   return PRESSES.map(p => {
     let operatorId='', operatorName='', operatorStamp='', moldNumber='';
     if (lastReport && lastReport.pressData) {
-      const lp = lastReport.pressData.find(x=>x.pressNumber===p);
+      const lp=lastReport.pressData.find(x=>x.pressNumber===p);
       if (lp) { operatorId=lp.operatorId||''; operatorName=lp.operatorName||''; operatorStamp=lp.operatorStamp||''; moldNumber=lp.moldNumber||''; }
     }
     return { pressNumber:p, operatorId, operatorName, operatorStamp,
@@ -328,7 +341,7 @@ function calcHit(good, goal) {
 }
 
 function generatePassdown(pressData) {
-  let lines = 'Molding -\n  (Good / Scrap / Goal)';
+  let lines='Molding -\n  (Good / Scrap / Goal)';
   (pressData||[]).forEach(p => {
     const g=p.isRunning?(parseInt(p.good||0,10)):0, sc=p.isRunning?(parseInt(p.scrap||0,10)):0, gl=parseInt(p.goal||0,10);
     let line=`${p.pressNumber} - ( ${g} / ${sc} / ${gl} )`;
@@ -341,7 +354,7 @@ function generatePassdown(pressData) {
 
 async function gasCall(action, payload={}) {
   if (GAS_URL==='YOUR_GAS_DEPLOYMENT_URL_HERE') throw new Error('GAS_URL not configured.');
-  const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action,...payload}) });
+  const res=await fetch(GAS_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action,...payload})});
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -365,62 +378,116 @@ function getDateRange(period) {
     const start=new Date(now.getFullYear(),now.getMonth(),1);
     return { start:start.toISOString(), end:now.toISOString() };
   }
-  return { start:new Date(0).toISOString(), end:now.toISOString() };
+  if (period==='all') return { start:new Date(2020,0,1).toISOString(), end:now.toISOString() };
+  return { start:new Date(2020,0,1).toISOString(), end:now.toISOString() };
+}
+
+function getMondayStr(dateStr) {
+  try {
+    const d=new Date(dateStr+'T12:00:00'), dow=d.getDay(), back=dow===0?6:dow-1;
+    d.setDate(d.getDate()-back);
+    return d.toISOString().split('T')[0];
+  } catch { return dateStr; }
+}
+
+function calcMolderStats(operatorName, reports) {
+  const nightMap={}, pressMap={}, weekMap={};
+  reports.forEach(r => {
+    let nGood=0, nGoal=0, hasIssue=false;
+    (r.pressData||[]).forEach(p => {
+      if (p.operatorName!==operatorName||!p.isRunning) return;
+      const g=parseInt(p.good||0,10), gl=parseInt(p.goal||0,10);
+      if (!gl) return;
+      nGood+=g; nGoal+=gl;
+      if (p.hasIssue) hasIssue=true;
+      if (!pressMap[p.pressNumber]) pressMap[p.pressNumber]={good:0,goal:0,nights:0,issues:0,molds:[]};
+      pressMap[p.pressNumber].good+=g; pressMap[p.pressNumber].goal+=gl; pressMap[p.pressNumber].nights++;
+      if (p.hasIssue) pressMap[p.pressNumber].issues++;
+      if (p.moldNumber) pressMap[p.pressNumber].molds.push(p.moldNumber);
+    });
+    if (nGoal>0) {
+      nightMap[r.date]={good:nGood,goal:nGoal,hit:Math.round((nGood/nGoal)*100),hasIssue};
+      const wk=getMondayStr(r.date);
+      if (!weekMap[wk]) weekMap[wk]={good:0,goal:0,nights:0};
+      weekMap[wk].good+=nGood; weekMap[wk].goal+=nGoal; weekMap[wk].nights++;
+    }
+  });
+  const nights=Object.entries(nightMap).map(([date,d])=>({date,...d})).sort((a,b)=>a.date.localeCompare(b.date));
+  const totalGood=nights.reduce((s,n)=>s+n.good,0), totalGoal=nights.reduce((s,n)=>s+n.goal,0);
+  const avgHit=totalGoal>0?Math.round((totalGood/totalGoal)*100):null;
+  const issueNights=nights.filter(n=>n.hasIssue).length;
+  const issueRate=nights.length>0?Math.round((issueNights/nights.length)*100):0;
+  const pressBreakdown=Object.entries(pressMap).map(([press,d])=>({press,hit:Math.round((d.good/d.goal)*100),nights:d.nights,issues:d.issues,latestMold:d.molds[d.molds.length-1]||''})).sort((a,b)=>b.hit-a.hit);
+  const weeklySummary=Object.entries(weekMap).map(([week,d])=>({week,hit:Math.round((d.good/d.goal)*100),good:d.good,goal:d.goal,nights:d.nights})).sort((a,b)=>b.week.localeCompare(a.week));
+  const lastThree=nights.slice(-3);
+  const isOnFire=lastThree.length>=3&&lastThree.every(n=>n.hit>=95);
+  return { nights, avgHit, issueRate, pressBreakdown, weeklySummary, isOnFire, isConcern:avgHit!==null&&avgHit<75, totalNights:nights.length };
+}
+
+function getMolderWeekStatus(operatorName, reports) {
+  let totalGood=0, totalGoal=0;
+  const nights=[];
+  reports.forEach(r => {
+    let nGood=0, nGoal=0, hasIssue=false;
+    (r.pressData||[]).forEach(p => {
+      if (p.operatorName!==operatorName||!p.isRunning) return;
+      const g=parseInt(p.good||0,10), gl=parseInt(p.goal||0,10);
+      nGood+=g; nGoal+=gl; if (p.hasIssue) hasIssue=true;
+    });
+    if (nGoal>0) { totalGood+=nGood; totalGoal+=nGoal; nights.push({date:r.date,good:nGood,goal:nGoal,hit:Math.round((nGood/nGoal)*100),hasIssue}); }
+  });
+  nights.sort((a,b)=>a.date.localeCompare(b.date));
+  const weekAvg=totalGoal>0?Math.round((totalGood/totalGoal)*100):null;
+  const lastThree=nights.slice(-3);
+  const isOnFire=lastThree.length>=3&&lastThree.every(n=>n.hit>=95);
+  return { weekAvg, isConcern:weekAvg!==null&&weekAvg<75, isOnFire, nightCount:nights.length };
 }
 
 function useIsDesktop() {
-  const [v, setV] = useState(window.innerWidth>=768);
-  useEffect(() => {
-    const h = () => setV(window.innerWidth>=768);
-    window.addEventListener('resize', h);
-    return () => window.removeEventListener('resize', h);
-  }, []);
+  const [v,setV]=useState(window.innerWidth>=768);
+  useEffect(()=>{ const h=()=>setV(window.innerWidth>=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
   return v;
 }
 
 // ============================================================
-// SWITCH
+// SMALL COMPONENTS
 // ============================================================
 function Switch({ id, checked, onChange }) {
+  return <label className="sw" htmlFor={id}><input id={id} type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} /><span className="sw-track"></span></label>;
+}
+
+function Stars({ value, onChange, readOnly }) {
   return (
-    <label className="sw" htmlFor={id}>
-      <input id={id} type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} />
-      <span className="sw-track"></span>
-    </label>
+    <div style={{display:'flex',gap:2}}>
+      {[1,2,3,4,5].map(s=>(
+        <button key={s} className="star-btn" onClick={()=>!readOnly&&onChange&&onChange(s)}
+          style={{color:s<=value?'#f59e0b':'#ddd',cursor:readOnly?'default':'pointer'}}>★</button>
+      ))}
+    </div>
   );
 }
 
-// ============================================================
-// LANGUAGE / LOGIN
-// ============================================================
 function LanguageScreen({ onSelect }) {
   return (
     <div className="lang-screen">
       <div><div className="lang-logo-accent"></div><div className="lang-logo">nVent Hoffman</div><div className="lang-dept">Molding Department</div></div>
       <div style={{fontSize:15,color:'#555',textAlign:'center'}}>Choose Language / Elige tu idioma</div>
-      <div className="lang-btns">
-        <button className="lang-btn" onClick={()=>onSelect('en')}>English</button>
-        <button className="lang-btn" onClick={()=>onSelect('es')}>Español</button>
-      </div>
+      <div className="lang-btns"><button className="lang-btn" onClick={()=>onSelect('en')}>English</button><button className="lang-btn" onClick={()=>onSelect('es')}>Español</button></div>
     </div>
   );
 }
 
 function LoginScreen({ lang, onLogin, onLangToggle, loading, error }) {
-  const [username,setUsername]=useState(''), [password,setPassword]=useState('');
-  const submit = () => { if(!username.trim()||!password) return; onLogin(username.trim(),password); };
+  const [u,setU]=useState(''), [p,setP]=useState('');
+  const submit=()=>{ if(!u.trim()||!p) return; onLogin(u.trim(),p); };
   return (
     <div className="login-screen">
       <div className="login-box">
-        <div style={{textAlign:'center',marginBottom:28}}>
-          <div className="login-logo-accent"></div>
-          <div className="login-title">nVent Hoffman</div>
-          <div className="login-sub">Molding Report App</div>
-        </div>
+        <div style={{textAlign:'center',marginBottom:28}}><div className="login-logo-accent"></div><div className="login-title">nVent Hoffman</div><div className="login-sub">Molding Report App</div></div>
         {error&&<div className="alert alert-error">{error}</div>}
         <div className="card">
-          <div className="field"><label className="field-label" htmlFor="un">{tx(lang,'username')}</label><input id="un" type="text" autoCapitalize="none" autoCorrect="off" value={username} onChange={e=>setUsername(e.target.value)} /></div>
-          <div className="field"><label className="field-label" htmlFor="pw">{tx(lang,'password')}</label><input id="pw" type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
+          <div className="field"><label className="field-label" htmlFor="un">{tx(lang,'username')}</label><input id="un" type="text" autoCapitalize="none" autoCorrect="off" value={u} onChange={e=>setU(e.target.value)} /></div>
+          <div className="field"><label className="field-label" htmlFor="pw">{tx(lang,'password')}</label><input id="pw" type="password" value={p} onChange={e=>setP(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
           <button className="btn btn-red" onClick={submit} disabled={loading}>{loading?tx(lang,'loading'):tx(lang,'signIn')}</button>
         </div>
         <button className="lang-switch-btn" onClick={onLangToggle}>{lang==='en'?tx(lang,'switchToEs'):tx(lang,'switchToEn')}</button>
@@ -434,37 +501,26 @@ function LoginScreen({ lang, onLogin, onLangToggle, loading, error }) {
 // ============================================================
 function PressCard({ data, operators, lang, onChange }) {
   const { pressNumber, operatorId, good, scrap, goal, notes, hasIssue, isRunning, notRunningReason, moldNumber } = data;
-  const reasons = NOT_RUNNING_REASONS[lang]||NOT_RUNNING_REASONS.en;
-  const hit = isRunning?calcHit(good,goal):null;
-  const upd = (field,val) => onChange(pressNumber,field,val);
-  const handleOpChange = opId => {
-    const op=operators.find(o=>o.id===opId);
-    upd('operatorId',opId); upd('operatorName',op?op.name:''); upd('operatorStamp',op?op.stampNumber:'');
-  };
+  const reasons=NOT_RUNNING_REASONS[lang]||NOT_RUNNING_REASONS.en;
+  const hit=isRunning?calcHit(good,goal):null;
+  const upd=(field,val)=>onChange(pressNumber,field,val);
+  const handleOpChange=opId=>{ const op=operators.find(o=>o.id===opId); upd('operatorId',opId); upd('operatorName',op?op.name:''); upd('operatorStamp',op?op.stampNumber:''); };
   let cardClass='card press-card';
-  if (!isRunning) cardClass+=' is-stopped';
-  else cardClass+=' is-running'+(hasIssue?' has-issue':'');
+  if (!isRunning) cardClass+=' is-stopped'; else cardClass+=' is-running'+(hasIssue?' has-issue':'');
   let badgeClass='press-badge badge-ok', badgeText=tx(lang,'ok');
   if (!isRunning) { badgeClass='press-badge badge-stopped'; badgeText=tx(lang,'stopped'); }
   else if (hasIssue) { badgeClass='press-badge badge-issue'; badgeText=tx(lang,'issue'); }
-
   return (
     <div className={cardClass}>
       <div className="press-card-top">
         <div className="press-num">{tx(lang,'press')} {pressNumber}</div>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <span className={badgeClass}>{badgeText}</span>
-          <div className="nr-toggle-wrap">
-            <span className="nr-toggle-label">{tx(lang,'notRunning')}</span>
-            <Switch id={`nr-${pressNumber}`} checked={!isRunning} onChange={v=>upd('isRunning',!v)} />
-          </div>
+          <div className="nr-toggle-wrap"><span className="nr-toggle-label">{tx(lang,'notRunning')}</span><Switch id={`nr-${pressNumber}`} checked={!isRunning} onChange={v=>upd('isRunning',!v)} /></div>
         </div>
       </div>
       <div className="field"><label className="field-label">{tx(lang,'operator')}</label>
-        <select value={operatorId} onChange={e=>handleOpChange(e.target.value)}>
-          <option value="">{tx(lang,'selectOp')}</option>
-          {operators.map(op=><option key={op.id} value={op.id}>{op.name} — #{op.stampNumber}</option>)}
-        </select>
+        <select value={operatorId} onChange={e=>handleOpChange(e.target.value)}><option value="">{tx(lang,'selectOp')}</option>{operators.map(op=><option key={op.id} value={op.id}>{op.name} — #{op.stampNumber}</option>)}</select>
       </div>
       <div className="field">
         <label className="field-label">{tx(lang,'moldNo')} <span style={{color:'#ccc',fontWeight:'normal',textTransform:'none',fontSize:10}}>({tx(lang,'moldOptional')})</span></label>
@@ -486,12 +542,7 @@ function PressCard({ data, operators, lang, onChange }) {
         </>
       ) : (
         <>
-          <div className="field"><label className="field-label">{tx(lang,'reason')}</label>
-            <select value={notRunningReason} onChange={e=>upd('notRunningReason',e.target.value)}>
-              <option value="">{tx(lang,'selectReason')}</option>
-              {reasons.map(r=><option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
+          <div className="field"><label className="field-label">{tx(lang,'reason')}</label><select value={notRunningReason} onChange={e=>upd('notRunningReason',e.target.value)}><option value="">{tx(lang,'selectReason')}</option>{reasons.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
           <div className="field"><label className="field-label">{tx(lang,'notes')}</label><textarea value={notes} placeholder={tx(lang,'notesHint')} onChange={e=>upd('notes',e.target.value)} /></div>
         </>
       )}
@@ -500,52 +551,347 @@ function PressCard({ data, operators, lang, onChange }) {
 }
 
 // ============================================================
-// PRESS BAR CHART (SVG)
+// PRESS BAR CHART
 // ============================================================
-function PressBarChart({ reports, lang }) {
-  const pressData = {};
-  PRESSES.forEach(p => { pressData[p]={good:0,goal:0}; });
-  reports.forEach(r => {
-    (r.pressData||[]).forEach(p => {
-      if (!p.isRunning||!pressData[p.pressNumber]) return;
-      pressData[p.pressNumber].good += parseInt(p.good||0,10);
-      pressData[p.pressNumber].goal += parseInt(p.goal||0,10);
-    });
-  });
-  const maxVal = Math.max(...Object.values(pressData).map(d=>d.goal), 1);
+function PressBarChart({ reports }) {
+  const pressData={};
+  PRESSES.forEach(p=>{ pressData[p]={good:0,goal:0}; });
+  reports.forEach(r=>{ (r.pressData||[]).forEach(p=>{ if (!p.isRunning||!pressData[p.pressNumber]) return; pressData[p.pressNumber].good+=parseInt(p.good||0,10); pressData[p.pressNumber].goal+=parseInt(p.goal||0,10); }); });
+  const maxVal=Math.max(...Object.values(pressData).map(d=>d.goal),1);
   const chartH=110, barW=28, groupW=44, leftPad=28, topPad=22, bottomPad=22;
-  const totalW = leftPad + PRESSES.length*groupW + 8;
+  const totalW=leftPad+PRESSES.length*groupW+8;
   return (
     <div style={{overflowX:'auto',marginBottom:4}}>
-      <svg viewBox={`0 0 ${totalW} ${chartH+topPad+bottomPad}`}
-           style={{minWidth:totalW,width:'100%',height:chartH+topPad+bottomPad,display:'block'}}>
-        {[0,25,50,75,100].map(pct=>{
-          const y=topPad+chartH-(pct/100)*chartH;
-          return <g key={pct}>
-            <line x1={leftPad} y1={y} x2={totalW-4} y2={y} stroke="#f0f0f0" strokeWidth="1"/>
-            <text x={leftPad-4} y={y+4} fontSize="8" textAnchor="end" fill="#bbb">{pct}</text>
-          </g>;
-        })}
-        {PRESSES.map((press,i)=>{
-          const d=pressData[press];
-          const hit=d.goal>0?Math.round((d.good/d.goal)*100):0;
-          const goalH=d.goal>0?(d.goal/maxVal)*chartH:0;
-          const goodH=d.goal>0?Math.min((d.good/maxVal)*chartH,chartH):0;
-          const x=leftPad+i*groupW+(groupW-barW)/2;
-          const color=hitHexColor(hit);
-          return <g key={press}>
-            <rect x={x} y={topPad+chartH-goalH} width={barW} height={goalH} fill="none" stroke="#e0e0e0" strokeWidth="1.5" rx="2"/>
-            {goodH>0&&<rect x={x} y={topPad+chartH-goodH} width={barW} height={goodH} fill={color} opacity="0.82" rx="2"/>}
-            {d.goal>0&&<text x={x+barW/2} y={topPad+chartH-goalH-4} fontSize="8" textAnchor="middle" fill={color} fontWeight="bold">{hit}%</text>}
-            <text x={x+barW/2} y={topPad+chartH+13} fontSize="8" textAnchor="middle" fill="#888">{press}</text>
-          </g>;
-        })}
+      <svg viewBox={`0 0 ${totalW} ${chartH+topPad+bottomPad}`} style={{minWidth:totalW,width:'100%',height:chartH+topPad+bottomPad,display:'block'}}>
+        {[0,25,50,75,100].map(pct=>{ const y=topPad+chartH-(pct/100)*chartH; return <g key={pct}><line x1={leftPad} y1={y} x2={totalW-4} y2={y} stroke="#f0f0f0" strokeWidth="1"/><text x={leftPad-4} y={y+4} fontSize="8" textAnchor="end" fill="#bbb">{pct}</text></g>; })}
+        {PRESSES.map((press,i)=>{ const d=pressData[press]; const hit=d.goal>0?Math.round((d.good/d.goal)*100):0; const goalH=d.goal>0?(d.goal/maxVal)*chartH:0; const goodH=d.goal>0?Math.min((d.good/maxVal)*chartH,chartH):0; const x=leftPad+i*groupW+(groupW-barW)/2; const color=hitHexColor(hit);
+          return <g key={press}><rect x={x} y={topPad+chartH-goalH} width={barW} height={goalH} fill="none" stroke="#e0e0e0" strokeWidth="1.5" rx="2"/>{goodH>0&&<rect x={x} y={topPad+chartH-goodH} width={barW} height={goodH} fill={color} opacity="0.82" rx="2"/>}{d.goal>0&&<text x={x+barW/2} y={topPad+chartH-goalH-4} fontSize="8" textAnchor="middle" fill={color} fontWeight="bold">{hit}%</text>}<text x={x+barW/2} y={topPad+chartH+13} fontSize="8" textAnchor="middle" fill="#888">{press}</text></g>; })}
       </svg>
       <div style={{display:'flex',gap:16,justifyContent:'center',fontSize:11,color:'#aaa',marginTop:2}}>
         <span><span style={{display:'inline-block',width:12,height:10,background:'#e0e0e0',border:'1.5px solid #ccc',marginRight:4,verticalAlign:'middle'}}></span>Goal</span>
         <span><span style={{display:'inline-block',width:12,height:10,background:'#1e7e34',opacity:0.8,marginRight:4,verticalAlign:'middle'}}></span>Good</span>
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// MOLDER TREND CHART
+// ============================================================
+function MolderTrendChart({ nights, lang }) {
+  if (!nights.length) return null;
+  const display=nights.slice(-30);
+  const barW=20, groupW=26, leftPad=28, topPad=26, bottomPad=18, chartH=110;
+  const totalW=leftPad+display.length*groupW+8;
+  return (
+    <div style={{overflowX:'auto'}}>
+      <svg viewBox={`0 0 ${totalW} ${chartH+topPad+bottomPad}`} style={{minWidth:totalW,width:'100%',height:chartH+topPad+bottomPad,display:'block'}}>
+        {/* Threshold lines */}
+        <line x1={leftPad} y1={topPad+chartH*0.05} x2={totalW-4} y2={topPad+chartH*0.05} stroke="#e8f5e9" strokeWidth="1.5" strokeDasharray="4"/>
+        <line x1={leftPad} y1={topPad+chartH*0.25} x2={totalW-4} y2={topPad+chartH*0.25} stroke="#fde8ec" strokeWidth="1.5" strokeDasharray="4"/>
+        <text x={leftPad-4} y={topPad+chartH*0.05+4} fontSize="8" textAnchor="end" fill="#a5d6a7">95</text>
+        <text x={leftPad-4} y={topPad+chartH*0.25+4} fontSize="8" textAnchor="end" fill="#f5bdc8">75</text>
+        {[0,50,100].map(pct=>{ const y=topPad+chartH-(pct/100)*chartH; return <g key={pct}><line x1={leftPad} y1={y} x2={totalW-4} y2={y} stroke="#f5f5f5" strokeWidth="1"/><text x={leftPad-4} y={y+4} fontSize="7" textAnchor="end" fill="#ddd">{pct}</text></g>; })}
+        {display.map((n,i)=>{ const barH=(n.hit/100)*chartH; const x=leftPad+i*groupW+(groupW-barW)/2; const color=hitHexColor(n.hit);
+          return <g key={n.date}>
+            <rect x={x} y={topPad+chartH-barH} width={barW} height={barH} fill={color} opacity="0.8" rx="2"/>
+            {n.hasIssue&&<text x={x+barW/2} y={topPad+chartH-barH-3} fontSize="8" textAnchor="middle" fill="#C8102E">⚠</text>}
+            {i%5===0&&<text x={x+barW/2} y={topPad+chartH+12} fontSize="7" textAnchor="middle" fill="#aaa">{n.date.slice(5)}</text>}
+          </g>;
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// ============================================================
+// ADD NOTE MODAL
+// ============================================================
+function AddNoteModal({ lang, operatorName, author, onSave, onClose }) {
+  const [noteText,setNoteText]=useState(''), [rating,setRating]=useState(0), [saving,setSaving]=useState(false), [err,setErr]=useState('');
+  const save=async()=>{
+    if (!noteText.trim()) return; setSaving(true); setErr('');
+    try {
+      const result=await gasCall('saveMolderNote',{operatorName,note:noteText.trim(),rating,author});
+      if (result.success) { onSave({id:result.id,note:noteText.trim(),rating,timestamp:result.timestamp,author}); }
+      else { setErr(result.error||tx(lang,'errOccurred')); setSaving(false); }
+    } catch { setErr(tx(lang,'networkErr')); setSaving(false); }
+  };
+  return (
+    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-sheet">
+        <div className="modal-title">{tx(lang,'addNote')} — {operatorName}</div>
+        {err&&<div className="alert alert-error">{err}</div>}
+        <div className="field">
+          <label className="field-label">{tx(lang,'rating')}</label>
+          <Stars value={rating} onChange={setRating} />
+        </div>
+        <div className="field">
+          <label className="field-label">{tx(lang,'notePlaceholder')}</label>
+          <textarea value={noteText} placeholder={tx(lang,'notePlaceholder')} onChange={e=>setNoteText(e.target.value)} style={{minHeight:120}} autoFocus />
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-gray" style={{flex:1}} onClick={onClose}>{tx(lang,'cancel')}</button>
+          <button className="btn btn-red" style={{flex:1}} onClick={save} disabled={saving||!noteText.trim()}>{saving?tx(lang,'saving'):tx(lang,'saveNote')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MOLDER PROFILE DETAIL
+// ============================================================
+function MolderProfileDetail({ operator, lang, user, settings, onBack, onSettingsUpdate }) {
+  const [period,setPeriod]=useState('week');
+  const [reports,setReports]=useState([]);
+  const [notes,setNotes]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [showAddNote,setShowAddNote]=useState(false);
+  const [profileVisible,setProfileVisible]=useState(settings[operator.name]?.profileVisible||false);
+  const [copied,setCopied]=useState(false);
+  const [msg,setMsg]=useState('');
+
+  useEffect(()=>{ loadData(); },[period]);
+  useEffect(()=>{ loadNotes(); },[]);
+
+  const loadData=async()=>{
+    setLoading(true);
+    const {start,end}=getDateRange(period);
+    try { const r=await gasCall('getReportsByRange',{startDate:start,endDate:end}); if(r.success) setReports(r.reports); } catch {}
+    setLoading(false);
+  };
+
+  const loadNotes=async()=>{
+    try { const r=await gasCall('getMolderNotes',{operatorName:operator.name}); if(r.success) setNotes(r.notes); } catch {}
+  };
+
+  const toggleVisibility=async(v)=>{
+    setProfileVisible(v);
+    try {
+      await gasCall('setMolderVisibility',{operatorName:operator.name,visible:v});
+      if (onSettingsUpdate) onSettingsUpdate(operator.name,{profileVisible:v});
+    } catch {}
+  };
+
+  const deleteNote=async(noteId)=>{
+    if (!window.confirm(tx(lang,'confirmDel'))) return;
+    try {
+      const r=await gasCall('deleteMolderNote',{noteId});
+      if (r.success) setNotes(prev=>prev.filter(n=>n.id!==noteId));
+    } catch {}
+  };
+
+  const stats=calcMolderStats(operator.name, reports);
+
+  const exportProfile=async()=>{
+    let text=`=== ${operator.name.toUpperCase()} — MOLDER PROFILE ===\n`;
+    text+=`Stamp: #${operator.stampNumber} | Period: ${period} | Avg Hit: ${stats.avgHit!==null?stats.avgHit+'%':'N/A'}\n`;
+    text+=`Nights Worked: ${stats.totalNights} | Issue Rate: ${stats.issueRate}%\n\n`;
+    if (stats.pressBreakdown.length) {
+      text+=`--- PRESS BREAKDOWN ---\n`;
+      stats.pressBreakdown.forEach(p=>{ text+=`Press ${p.press}: ${p.hit}% (${p.nights} nights${p.latestMold?', Mold: '+p.latestMold:''})\n`; });
+    }
+    if (stats.weeklySummary.length) {
+      text+=`\n--- WEEKLY SUMMARY ---\n`;
+      stats.weeklySummary.forEach(w=>{ text+=`${tx(lang,'weekOf')} ${w.week}: ${w.hit}% — ${w.good} good / ${w.goal} goal (${w.nights} nights)\n`; });
+    }
+    if (notes.length) {
+      text+=`\n--- 1:1 NOTES ---\n`;
+      notes.forEach(n=>{ text+=`${formatDateTime(n.timestamp)} [${n.author}] ${n.rating>0?'★'.repeat(n.rating):''}\n${n.note}\n\n`; });
+    }
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(()=>setCopied(false),2500); } catch {}
+  };
+
+  const periods=[['week',tx(lang,'thisWeek')],['lastWeek',tx(lang,'lastWeek')],['month',tx(lang,'thisMonth')],['all',tx(lang,'allTime')]];
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',minHeight:'100vh'}}>
+      <div className="app-header">
+        <div><div className="header-title">{operator.name}</div><div className="header-sub">#{operator.stampNumber}</div></div>
+        <div style={{display:'flex',gap:8}}>
+          <button className="header-btn" onClick={exportProfile}>{copied?'✓':tx(lang,'exportProfile')}</button>
+          <button className="header-btn" onClick={onBack}>{tx(lang,'back')}</button>
+        </div>
+      </div>
+
+      <div className="scroll-area">
+        {msg&&<div className="alert alert-info">{msg}</div>}
+
+        <div className="period-filter">{periods.map(([k,l])=><button key={k} className={`period-btn${period===k?' active':''}`} onClick={()=>setPeriod(k)}>{l}</button>)}</div>
+
+        {loading && <div className="loading-msg">{tx(lang,'loading')}</div>}
+        {!loading && stats.totalNights===0 && <div className="empty-msg" style={{padding:24}}>{tx(lang,'noMolderData')}</div>}
+
+        {!loading && stats.totalNights>0 && (
+          <>
+            {/* Status badges */}
+            {(stats.isConcern||stats.isOnFire)&&(
+              <div className={`alert-section ${stats.isConcern?'alert-section-concern':'alert-section-fire'}`} style={{marginBottom:11}}>
+                <div className="alert-section-title" style={{color:stats.isConcern?'#C8102E':'#1e7e34'}}>
+                  {stats.isConcern?`⚠ ${tx(lang,'concernFlag')} — below 75% average`:`🏆 ${tx(lang,'onFireFlag')} — 95%+ three nights in a row`}
+                </div>
+              </div>
+            )}
+
+            {/* Summary stats */}
+            <div className="stat-row">
+              <div className="stat-card"><div className="stat-big" style={{color:stats.avgHit!==null?hitHexColor(stats.avgHit):'#aaa'}}>{stats.avgHit!==null?stats.avgHit+'%':'—'}</div><div className="stat-label">{tx(lang,'avgHitRate')}</div></div>
+              <div className="stat-card"><div className="stat-big">{stats.totalNights}</div><div className="stat-label">{tx(lang,'nightsWorked')}</div></div>
+              <div className="stat-card"><div className="stat-big" style={{color:stats.issueRate>20?'#C8102E':stats.issueRate>10?'#d6820a':'#1e7e34'}}>{stats.issueRate}%</div><div className="stat-label">{tx(lang,'issueRate')}</div></div>
+            </div>
+
+            {/* Trend chart */}
+            <div className="section-head">{tx(lang,'trendChart')}</div>
+            <div className="card"><MolderTrendChart nights={stats.nights} lang={lang} /></div>
+
+            {/* Press breakdown */}
+            {stats.pressBreakdown.length>0&&(
+              <>
+                <div className="section-head">{tx(lang,'pressBrk')}</div>
+                <div className="card">
+                  {stats.pressBreakdown.map(p=>(
+                    <div key={p.press} className="scorecard-row">
+                      <div>
+                        <div className="scorecard-name">{tx(lang,'press')} {p.press}</div>
+                        <div style={{fontSize:11,color:'#aaa'}}>{p.nights} nights{p.latestMold?` · Mold: ${p.latestMold}`:''}</div>
+                      </div>
+                      <div className="scorecard-bar-wrap"><div className="scorecard-bar" style={{width:`${Math.min(p.hit,100)}%`,background:hitHexColor(p.hit)}}></div></div>
+                      <div className="scorecard-pct" style={{color:hitHexColor(p.hit)}}>{p.hit}%</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Weekly summary */}
+            {stats.weeklySummary.length>0&&(
+              <>
+                <div className="section-head">{tx(lang,'weeklySum')}</div>
+                <div className="card" style={{overflowX:'auto'}}>
+                  <table className="week-table">
+                    <thead><tr><th>{tx(lang,'weekOf')}</th><th>Hit %</th><th>{tx(lang,'good')}</th><th>{tx(lang,'goal')}</th><th>Nights</th></tr></thead>
+                    <tbody>
+                      {stats.weeklySummary.map(w=>(
+                        <tr key={w.week}>
+                          <td>{formatDate(w.week)}</td>
+                          <td style={{fontWeight:'bold',color:hitHexColor(w.hit)}}>{w.hit}%</td>
+                          <td>{w.good.toLocaleString()}</td>
+                          <td>{w.goal.toLocaleString()}</td>
+                          <td>{w.nights}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {/* Visibility toggle */}
+        <div className="card">
+          <div className="toggle-row">
+            <span className="toggle-text" style={{fontSize:13}}>{tx(lang,'visibleToMolder')}</span>
+            <Switch id="vis-sw" checked={profileVisible} onChange={toggleVisibility} />
+          </div>
+        </div>
+
+        {/* 1:1 Notes */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+          <div className="section-head" style={{marginBottom:0}}>{tx(lang,'oneOnOneNotes')}</div>
+          <button className="btn-sm btn-sm-amber" onClick={()=>setShowAddNote(true)}>+ {tx(lang,'addNote')}</button>
+        </div>
+
+        {notes.length===0&&<div className="empty-msg" style={{padding:16,textAlign:'left',background:'white',borderRadius:10,marginBottom:11}}>{tx(lang,'noNotes')}</div>}
+        {notes.map(n=>(
+          <div key={n.id} className="note-card">
+            <div className="note-meta">
+              <div>
+                <span style={{fontWeight:'bold',color:'#555'}}>{n.author}</span>
+                <span style={{margin:'0 6px'}}>·</span>
+                <span>{formatDateTime(n.timestamp)}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:6}}>
+                {n.rating>0&&<Stars value={n.rating} readOnly />}
+                <button className="btn-sm btn-sm-danger" style={{padding:'3px 8px',fontSize:11}} onClick={()=>deleteNote(n.id)}>✕</button>
+              </div>
+            </div>
+            <div className="note-text">{n.note}</div>
+          </div>
+        ))}
+      </div>
+
+      {showAddNote&&<AddNoteModal lang={lang} operatorName={operator.name} author={user.username}
+        onSave={note=>{ setNotes(prev=>[note,...prev]); setShowAddNote(false); }}
+        onClose={()=>setShowAddNote(false)} />}
+    </div>
+  );
+}
+
+// ============================================================
+// MOLDER PROFILES TAB (list view)
+// ============================================================
+function MolderProfilesTab({ lang, operators, user }) {
+  const [selected,setSelected]=useState(null);
+  const [weekReports,setWeekReports]=useState([]);
+  const [settings,setSettings]=useState({});
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    Promise.all([
+      gasCall('getReportsByRange',getDateRange('week')),
+      gasCall('getMolderSettings')
+    ]).then(([rRes,sRes])=>{
+      if (rRes.success) setWeekReports(rRes.reports);
+      if (sRes.success) setSettings(sRes.settings);
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+
+  const handleSettingsUpdate=(name,update)=>setSettings(prev=>({...prev,[name]:{...prev[name],...update}}));
+
+  if (selected) {
+    return <MolderProfileDetail operator={selected} lang={lang} user={user}
+      settings={settings} onBack={()=>setSelected(null)} onSettingsUpdate={handleSettingsUpdate} />;
+  }
+
+  if (loading) return <div className="loading-msg">{tx(lang,'loading')}</div>;
+
+  const operatorsWithStatus=operators.map(op=>{
+    const status=getMolderWeekStatus(op.name,weekReports);
+    const s=settings[op.name]||{};
+    return {...op,...status,lastReviewed:s.lastReviewed};
+  }).sort((a,b)=>{
+    if (a.isConcern&&!b.isConcern) return -1;
+    if (!a.isConcern&&b.isConcern) return 1;
+    if (a.isOnFire&&!b.isOnFire) return -1;
+    if (!a.isOnFire&&b.isOnFire) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return (
+    <>
+      {operatorsWithStatus.map(op=>(
+        <div key={op.id} className="card report-card" onClick={()=>setSelected(op)}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:'bold',fontSize:15,display:'flex',alignItems:'center',gap:6}}>
+                {op.name}
+                {op.isOnFire&&<span className="molder-badge badge-fire">🏆</span>}
+                {op.isConcern&&<span className="molder-badge badge-concern">⚠</span>}
+              </div>
+              <div style={{fontSize:12,color:'#888',marginTop:2}}>#{op.stampNumber} · {op.nightCount} {tx(lang,'nightsWorked')} this week</div>
+              {op.lastReviewed&&<div style={{fontSize:11,color:'#bbb',marginTop:2}}>{tx(lang,'lastReviewed')}: {formatDateTime(op.lastReviewed)}</div>}
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              {op.weekAvg!==null&&<div style={{fontSize:22,fontWeight:'bold',color:hitHexColor(op.weekAvg)}}>{op.weekAvg}%</div>}
+              <span style={{color:'#C8102E',fontSize:20}}>›</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -569,7 +915,7 @@ function UndoOverlay({ countdown, lang, onUndo }) {
 // LEAD VIEW
 // ============================================================
 function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabel }) {
-  const isDesktop = useIsDesktop();
+  const isDesktop=useIsDesktop();
   const [date,setDate]=useState(todayStr);
   const [pressItems,setPressItems]=useState(()=>initPressData(goals,lastReport));
   const [submitting,setSubmitting]=useState(false), [countdown,setCountdown]=useState(5);
@@ -578,10 +924,9 @@ function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabe
   const [copied,setCopied]=useState(false);
   const timerRef=useRef(null), payloadRef=useRef(null);
 
-  const handleChange = (pressNum,field,val) =>
-    setPressItems(prev=>prev.map(p=>p.pressNumber===pressNum?{...p,[field]:val}:p));
+  const handleChange=(pressNum,field,val)=>setPressItems(prev=>prev.map(p=>p.pressNumber===pressNum?{...p,[field]:val}:p));
 
-  const handleSubmit = () => {
+  const handleSubmit=()=>{
     const running=pressItems.filter(p=>p.isRunning);
     const tGood=running.reduce((s,p)=>s+(parseInt(p.good,10)||0),0);
     const tGoal=running.reduce((s,p)=>s+(parseInt(p.goal,10)||0),0);
@@ -593,10 +938,7 @@ function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabe
   useEffect(()=>{
     if (!submitting) return;
     let cnt=5;
-    timerRef.current=setInterval(()=>{
-      cnt-=1; setCountdown(cnt);
-      if (cnt<=0) { clearInterval(timerRef.current); doSubmit(); }
-    },1000);
+    timerRef.current=setInterval(()=>{ cnt-=1; setCountdown(cnt); if(cnt<=0){clearInterval(timerRef.current);doSubmit();} },1000);
     return ()=>clearInterval(timerRef.current);
   },[submitting]);
 
@@ -611,9 +953,7 @@ function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabe
     } catch { setSubmitting(false); setSubmitError(tx(lang,'networkErr')); }
   };
 
-  const handleCopy=async()=>{
-    try { await navigator.clipboard.writeText(generatePassdown(submittedData)); setCopied(true); setTimeout(()=>setCopied(false),2500); } catch {}
-  };
+  const handleCopy=async()=>{ try { await navigator.clipboard.writeText(generatePassdown(submittedData)); setCopied(true); setTimeout(()=>setCopied(false),2500); } catch {} };
 
   const resetForm=()=>{ setSubmitted(false); setSubmittedData(null); setPressItems(initPressData(goals,lastReport)); setDate(todayStr()); };
 
@@ -625,12 +965,7 @@ function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabe
           <div className="success-icon">✅</div>
           <div className="success-title">{tx(lang,'submitted')}</div>
           <div className="success-sub">{tx(lang,'submittedSub')}</div>
-          {overallHit!==null&&overallHit>=90&&(
-            <div className="congrats-box">
-              <div className="congrats-title">🏆 {tx(lang,'congrats')} {user.username}!</div>
-              <div className="congrats-sub">{tx(lang,'congratsSub')} {overallHit}%</div>
-            </div>
-          )}
+          {overallHit!==null&&overallHit>=90&&<div className="congrats-box"><div className="congrats-title">🏆 {tx(lang,'congrats')} {user.username}!</div><div className="congrats-sub">{tx(lang,'congratsSub')} {overallHit}%</div></div>}
           <div style={{width:'100%',maxWidth:280,display:'flex',flexDirection:'column',gap:10,marginTop:8}}>
             <button className="btn btn-red" onClick={resetForm}>{tx(lang,'newReport')}</button>
             <button className="btn btn-gray" onClick={onLogout}>{backLabel||tx(lang,'logout')}</button>
@@ -639,9 +974,7 @@ function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabe
         <div className="success-right">
           <div className="passdown-label">{tx(lang,'passdown')}</div>
           <pre className="passdown-pre">{passText}</pre>
-          <button className="btn btn-outline" onClick={handleCopy}>
-            {copied?`✓ ${tx(lang,'copied')}`:tx(lang,'copyPassdown')}
-          </button>
+          <button className="btn btn-outline" onClick={handleCopy}>{copied?`✓ ${tx(lang,'copied')}`:tx(lang,'copyPassdown')}</button>
         </div>
       </div>
     );
@@ -659,13 +992,9 @@ function LeadView({ lang, user, operators, goals, lastReport, onLogout, backLabe
       </div>
       <div className="scroll-area">
         {submitError&&<div className="alert alert-error">{submitError}</div>}
-        <div className={isDesktop?'press-grid':''}>
-          {pressItems.map(p=><PressCard key={p.pressNumber} data={p} operators={operators} lang={lang} onChange={handleChange} />)}
-        </div>
+        <div className={isDesktop?'press-grid':''}>{pressItems.map(p=><PressCard key={p.pressNumber} data={p} operators={operators} lang={lang} onChange={handleChange} />)}</div>
       </div>
-      <div className="bottom-bar">
-        <button className="btn btn-red" onClick={handleSubmit}>{tx(lang,'submitReport')}</button>
-      </div>
+      <div className="bottom-bar"><button className="btn btn-red" onClick={handleSubmit}>{tx(lang,'submitReport')}</button></div>
       {submitting&&<UndoOverlay countdown={countdown} lang={lang} onUndo={handleUndo} />}
     </div>
   );
@@ -681,20 +1010,14 @@ function UserModal({ lang, item, onSave, onClose }) {
   const [email,setEmail]=useState(item?item.email||'':'');
   const [notifyReport,setNotifyReport]=useState(item?item.notifyReport||false:false);
   const [saving,setSaving]=useState(false), [err,setErr]=useState('');
-
   const save=async()=>{
-    if (!username.trim()) return;
-    if (!item&&!password) return;
-    setSaving(true); setErr('');
+    if (!username.trim()) return; if (!item&&!password) return; setSaving(true); setErr('');
     try {
-      const payload=item
-        ?{id:item.id,username:username.trim(),role,email,notifyReport,...(password?{password}:{})}
-        :{username:username.trim(),password,role,email,notifyReport};
+      const payload=item?{id:item.id,username:username.trim(),role,email,notifyReport,...(password?{password}:{})}:{username:username.trim(),password,role,email,notifyReport};
       const result=await gasCall(item?'updateUser':'addUser',payload);
       if (result.success) { onSave(); } else { setErr(result.error||tx(lang,'errOccurred')); setSaving(false); }
     } catch { setErr(tx(lang,'networkErr')); setSaving(false); }
   };
-
   return (
     <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal-sheet">
@@ -702,19 +1025,9 @@ function UserModal({ lang, item, onSave, onClose }) {
         {err&&<div className="alert alert-error">{err}</div>}
         <div className="field"><label className="field-label">{tx(lang,'username')}</label><input type="text" autoCapitalize="none" value={username} onChange={e=>setUsername(e.target.value)} /></div>
         <div className="field"><label className="field-label">{tx(lang,'password')}{item?` — ${tx(lang,'keepPw')}`:''}</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} /></div>
-        <div className="field"><label className="field-label">{tx(lang,'role')}</label>
-          <select value={role} onChange={e=>setRole(e.target.value)}>
-            <option value="lead">{tx(lang,'lead')}</option>
-            <option value="manager">{tx(lang,'managerRole')}</option>
-          </select>
-        </div>
-        <div className="field"><label className="field-label">{tx(lang,'email')} <span style={{color:'#ccc',fontWeight:'normal',textTransform:'none',fontSize:10}}>(optional)</span></label>
-          <input type="text" autoCapitalize="none" value={email} onChange={e=>setEmail(e.target.value)} placeholder="user@example.com" />
-        </div>
-        <div className="toggle-row" style={{marginBottom:12}}>
-          <span className="toggle-text" style={{fontSize:13}}>{tx(lang,'notifyReport')}</span>
-          <Switch id="notify-sw" checked={notifyReport} onChange={setNotifyReport} />
-        </div>
+        <div className="field"><label className="field-label">{tx(lang,'role')}</label><select value={role} onChange={e=>setRole(e.target.value)}><option value="lead">{tx(lang,'lead')}</option><option value="manager">{tx(lang,'managerRole')}</option></select></div>
+        <div className="field"><label className="field-label">{tx(lang,'email')} <span style={{color:'#ccc',fontWeight:'normal',textTransform:'none',fontSize:10}}>(optional)</span></label><input type="text" autoCapitalize="none" value={email} onChange={e=>setEmail(e.target.value)} placeholder="user@example.com" /></div>
+        <div className="toggle-row" style={{marginBottom:12}}><span className="toggle-text" style={{fontSize:13}}>{tx(lang,'notifyReport')}</span><Switch id="notify-sw" checked={notifyReport} onChange={setNotifyReport} /></div>
         <div className="modal-footer">
           <button className="btn btn-gray" style={{flex:1}} onClick={onClose}>{tx(lang,'cancel')}</button>
           <button className="btn btn-red" style={{flex:1}} onClick={save} disabled={saving}>{saving?tx(lang,'saving'):tx(lang,'save')}</button>
@@ -724,9 +1037,6 @@ function UserModal({ lang, item, onSave, onClose }) {
   );
 }
 
-// ============================================================
-// OPERATOR MODAL
-// ============================================================
 function OperatorModal({ lang, item, onSave, onClose }) {
   const [name,setName]=useState(item?item.name:''), [stamp,setStamp]=useState(item?item.stampNumber:'');
   const [saving,setSaving]=useState(false), [err,setErr]=useState('');
@@ -757,29 +1067,27 @@ function OperatorModal({ lang, item, onSave, onClose }) {
 // ============================================================
 // REPORT DETAIL
 // ============================================================
-function ReportDetail({ report, lang, onBack }) {
-  const [resending,setResending]=useState(false), [msg,setMsg]=useState('');
+function ReportDetail({ report, lang, onBack, onArchive }) {
+  const [resending,setResending]=useState(false), [archiving,setArchiving]=useState(false);
+  const [msg,setMsg]=useState('');
   const [editingPress,setEditingPress]=useState(null), [moldInput,setMoldInput]=useState('');
   const [localData,setLocalData]=useState(report.pressData||[]);
   const [copied,setCopied]=useState(false);
 
-  const resend=async()=>{ setResending(true); setMsg('');
-    try { const r=await gasCall('resendEmail',{reportId:report.id}); setMsg(r.success?'Email re-sent.':'Error: '+(r.error||'Unknown')); } catch { setMsg(tx(lang,'networkErr')); }
-    setResending(false);
+  const resend=async()=>{ setResending(true); setMsg(''); try { const r=await gasCall('resendEmail',{reportId:report.id}); setMsg(r.success?'Email re-sent.':'Error: '+(r.error||'Unknown')); } catch { setMsg(tx(lang,'networkErr')); } setResending(false); };
+  const handleCopyPassdown=async()=>{ try { await navigator.clipboard.writeText(generatePassdown(localData)); setCopied(true); setTimeout(()=>setCopied(false),2500); } catch {} };
+  const handleArchive=async()=>{
+    if (!window.confirm(tx(lang,'confirmArchive'))) return;
+    setArchiving(true);
+    try { const r=await gasCall('archiveReport',{reportId:report.id}); if(r.success) onArchive(report.id); } catch { setMsg(tx(lang,'networkErr')); }
+    setArchiving(false);
   };
-
-  const handleCopyPassdown=async()=>{
-    try { await navigator.clipboard.writeText(generatePassdown(localData)); setCopied(true); setTimeout(()=>setCopied(false),2500); } catch {}
-  };
-
   const saveMold=async(resendEmail)=>{
     const pressNumber=editingPress;
     try {
       const result=await gasCall('editReport',{reportId:report.id,pressNumber,updates:{moldNumber:moldInput},resendEmail});
-      if (result.success) {
-        setLocalData(prev=>prev.map(p=>String(p.pressNumber)===String(pressNumber)?{...p,moldNumber:moldInput}:p));
-        setMsg(resendEmail?'Saved and email re-sent.':'Saved.');
-      } else { setMsg('Error: '+(result.error||'Unknown')); }
+      if (result.success) { setLocalData(prev=>prev.map(p=>String(p.pressNumber)===String(pressNumber)?{...p,moldNumber:moldInput}:p)); setMsg(resendEmail?'Saved and email re-sent.':'Saved.'); }
+      else { setMsg('Error: '+(result.error||'Unknown')); }
     } catch { setMsg(tx(lang,'networkErr')); }
     setEditingPress(null);
   };
@@ -787,53 +1095,37 @@ function ReportDetail({ report, lang, onBack }) {
   return (
     <div style={{display:'flex',flexDirection:'column',minHeight:'100vh'}}>
       <div className="app-header">
-        <div><div className="header-title">{report.date}</div><div className="header-sub">{tx(lang,'submittedBy')}: {report.submittedBy}</div></div>
+        <div><div className="header-title">{formatDate(report.date)}</div><div className="header-sub">{tx(lang,'submittedBy')}: {report.submittedBy} · {formatDateTime(report.timestamp)}</div></div>
         <button className="header-btn" onClick={onBack}>{tx(lang,'back')}</button>
       </div>
       <div className="scroll-area">
         {msg&&<div className="alert alert-info">{msg}</div>}
         <div className="card" style={{marginBottom:11}}>
-          <div style={{display:'flex',gap:8}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <button className="btn btn-outline" style={{flex:1}} onClick={resend} disabled={resending}>{resending?'...':tx(lang,'resend')}</button>
             <button className="btn btn-outline" style={{flex:1}} onClick={handleCopyPassdown}>{copied?`✓ ${tx(lang,'copied')}`:tx(lang,'copyPassdown')}</button>
+            <button className="btn-sm btn-sm-danger" style={{width:'100%',padding:'10px',textAlign:'center',borderRadius:8}} onClick={handleArchive} disabled={archiving}>{archiving?'...':tx(lang,'archiveReport')}</button>
           </div>
           <pre className="passdown-pre" style={{marginTop:10,fontSize:11}}>{generatePassdown(localData)}</pre>
         </div>
-
         {localData.map(p=>{
           const hit=p.isRunning?calcHit(p.good,p.goal):null;
           const isEditing=editingPress===p.pressNumber||editingPress===String(p.pressNumber);
           let cardClass='card press-card';
-          if (!p.isRunning) cardClass+=' is-stopped';
-          else if (p.hasIssue) cardClass+=' is-running has-issue';
-          else cardClass+=' is-running';
+          if (!p.isRunning) cardClass+=' is-stopped'; else if (p.hasIssue) cardClass+=' is-running has-issue'; else cardClass+=' is-running';
           return (
             <div key={p.pressNumber} className={cardClass}>
               <div className="press-card-top">
                 <div className="press-num">{tx(lang,'press')} {p.pressNumber}</div>
-                <span className={`press-badge ${!p.isRunning?'badge-stopped':p.hasIssue?'badge-issue':'badge-ok'}`}>
-                  {!p.isRunning?tx(lang,'stopped'):p.hasIssue?tx(lang,'issue'):tx(lang,'ok')}
-                </span>
+                <span className={`press-badge ${!p.isRunning?'badge-stopped':p.hasIssue?'badge-issue':'badge-ok'}`}>{!p.isRunning?tx(lang,'stopped'):p.hasIssue?tx(lang,'issue'):tx(lang,'ok')}</span>
               </div>
               <div style={{fontSize:13,color:'#888',marginBottom:4}}>{p.operatorName?`${p.operatorName} — #${p.operatorStamp}`:'—'}</div>
-              <div className="mold-display">
-                {tx(lang,'moldNo')}: {p.moldNumber||'—'}
-                <button onClick={()=>{setEditingPress(p.pressNumber);setMoldInput(p.moldNumber||'');}} style={{marginLeft:8,background:'none',border:'none',color:'#C8102E',fontSize:11,cursor:'pointer',fontWeight:'bold'}}>{tx(lang,'editMold')}</button>
-              </div>
-              {isEditing&&(
-                <div className="mold-edit-row">
-                  <input className="mold-edit-input" type="text" value={moldInput} placeholder="e.g. M-452-A" onChange={e=>setMoldInput(e.target.value)} />
-                  <button className="btn-sm btn-sm-gray" onClick={()=>saveMold(false)}>{tx(lang,'saveQuiet')}</button>
-                  <button className="btn-sm btn-sm-green" onClick={()=>saveMold(true)}>{tx(lang,'saveAndResend')}</button>
-                </div>
-              )}
+              <div className="mold-display">{tx(lang,'moldNo')}: {p.moldNumber||'—'} <button onClick={()=>{setEditingPress(p.pressNumber);setMoldInput(p.moldNumber||'');}} style={{marginLeft:8,background:'none',border:'none',color:'#C8102E',fontSize:11,cursor:'pointer',fontWeight:'bold'}}>{tx(lang,'editMold')}</button></div>
+              {isEditing&&<div className="mold-edit-row"><input className="mold-edit-input" type="text" value={moldInput} placeholder="e.g. M-452-A" onChange={e=>setMoldInput(e.target.value)} /><button className="btn-sm btn-sm-gray" onClick={()=>saveMold(false)}>{tx(lang,'saveQuiet')}</button><button className="btn-sm btn-sm-green" onClick={()=>saveMold(true)}>{tx(lang,'saveAndResend')}</button></div>}
               {p.isRunning?(
                 <div className="three-col" style={{marginTop:8,marginBottom:4}}>
                   {[[tx(lang,'good'),p.good||0],[tx(lang,'scrap'),p.scrap||0],[tx(lang,'hitPct'),hit!==null?hit+'%':'—']].map(([label,val],i)=>(
-                    <div key={label} style={{textAlign:'center'}}>
-                      <div className="col-label">{label}</div>
-                      <div style={{fontSize:20,fontWeight:'bold',color:i===2&&hit!==null?hitHexColor(hit):'#1a1a1a'}}>{val}</div>
-                    </div>
+                    <div key={label} style={{textAlign:'center'}}><div className="col-label">{label}</div><div style={{fontSize:20,fontWeight:'bold',color:i===2&&hit!==null?hitHexColor(hit):'#1a1a1a'}}>{val}</div></div>
                   ))}
                 </div>
               ):(
@@ -851,7 +1143,7 @@ function ReportDetail({ report, lang, onBack }) {
 // ============================================================
 // OVERVIEW TAB
 // ============================================================
-function OverviewTab({ lang }) {
+function OverviewTab({ lang, operators }) {
   const [period,setPeriod]=useState('week');
   const [reports,setReports]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -868,19 +1160,18 @@ function OverviewTab({ lang }) {
 
   const periods=[['week',tx(lang,'thisWeek')],['lastWeek',tx(lang,'lastWeek')],['month',tx(lang,'thisMonth')]];
 
-  if (loading) return (
-    <>
-      <div className="period-filter">{periods.map(([k,l])=><button key={k} className={`period-btn${period===k?' active':''}`} onClick={()=>setPeriod(k)}>{l}</button>)}</div>
-      <div className="loading-msg">{tx(lang,'loading')}</div>
-    </>
-  );
+  // Calculate molder alerts from week reports
+  const molderAlerts=reports.length&&operators.length ? operators.map(op=>{
+    const s=getMolderWeekStatus(op.name,reports);
+    return {...op,...s};
+  }).filter(op=>op.isConcern||op.isOnFire) : [];
 
-  if (!reports.length) return (
-    <>
-      <div className="period-filter">{periods.map(([k,l])=><button key={k} className={`period-btn${period===k?' active':''}`} onClick={()=>setPeriod(k)}>{l}</button>)}</div>
-      <div className="empty-msg" style={{padding:40}}>{tx(lang,'noWeekData')}</div>
-    </>
-  );
+  const concerns=molderAlerts.filter(o=>o.isConcern);
+  const onFire=molderAlerts.filter(o=>o.isOnFire&&!o.isConcern);
+
+  if (loading) return (<><div className="period-filter">{periods.map(([k,l])=><button key={k} className={`period-btn${period===k?' active':''}`} onClick={()=>setPeriod(k)}>{l}</button>)}</div><div className="loading-msg">{tx(lang,'loading')}</div></>);
+
+  if (!reports.length) return (<><div className="period-filter">{periods.map(([k,l])=><button key={k} className={`period-btn${period===k?' active':''}`} onClick={()=>setPeriod(k)}>{l}</button>)}</div><div className="empty-msg" style={{padding:40}}>{tx(lang,'noWeekData')}</div></>);
 
   const opStats={}, pressStats={};
   let totalGood=0, totalGoal=0;
@@ -912,60 +1203,41 @@ function OverviewTab({ lang }) {
 
   return (
     <>
+      {/* Alert section */}
+      {concerns.length>0&&<div className="alert-section alert-section-concern"><div className="alert-section-title" style={{color:'#C8102E'}}>⚠ {tx(lang,'concernFlag')} — below 75%</div><div className="alert-names" style={{color:'#C8102E'}}>{concerns.map(o=>o.name).join(', ')}</div></div>}
+      {onFire.length>0&&<div className="alert-section alert-section-fire"><div className="alert-section-title" style={{color:'#1e7e34'}}>🏆 {tx(lang,'onFireFlag')} — 95%+ three nights in a row</div><div className="alert-names" style={{color:'#1e7e34'}}>{onFire.map(o=>o.name).join(', ')}</div></div>}
+
       <div className="period-filter">{periods.map(([k,l])=><button key={k} className={`period-btn${period===k?' active':''}`} onClick={()=>setPeriod(k)}>{l}</button>)}</div>
 
-      {/* Summary stats */}
       <div className="stat-row">
         <div className="stat-card"><div className="stat-big" style={{color:hitHexColor(overall)}}>{overall}%</div><div className="stat-label">{tx(lang,'overallHit')}</div></div>
         <div className="stat-card"><div className="stat-big">{totalGood.toLocaleString()}</div><div className="stat-label">{tx(lang,'totalGood')}</div></div>
         <div className="stat-card"><div className="stat-big">{reports.length}</div><div className="stat-label">{tx(lang,'reports')}</div></div>
       </div>
 
-      {/* Best / Worst day */}
-      {dayRanked.length>1&&(
-        <div className="stat-row">
-          <div className="stat-card">
-            <div style={{fontSize:11,color:'#888',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>🏆 {tx(lang,'bestDay')}</div>
-            <div style={{fontSize:22,fontWeight:'bold',color:'#1e7e34'}}>{bestDay.hit}%</div>
-            <div style={{fontSize:12,color:'#555',marginTop:2}}>{bestDay.date}</div>
-          </div>
-          <div className="stat-card">
-            <div style={{fontSize:11,color:'#888',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>📉 {tx(lang,'worstDay')}</div>
-            <div style={{fontSize:22,fontWeight:'bold',color:'#C8102E'}}>{worstDay.hit}%</div>
-            <div style={{fontSize:12,color:'#555',marginTop:2}}>{worstDay.date}</div>
-          </div>
-        </div>
-      )}
+      {dayRanked.length>1&&<div className="stat-row">
+        <div className="stat-card"><div style={{fontSize:11,color:'#888',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>🏆 {tx(lang,'bestDay')}</div><div style={{fontSize:22,fontWeight:'bold',color:'#1e7e34'}}>{bestDay.hit}%</div><div style={{fontSize:12,color:'#555',marginTop:2}}>{formatDate(bestDay.date)}</div></div>
+        <div className="stat-card"><div style={{fontSize:11,color:'#888',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>📉 {tx(lang,'worstDay')}</div><div style={{fontSize:22,fontWeight:'bold',color:'#C8102E'}}>{worstDay.hit}%</div><div style={{fontSize:12,color:'#555',marginTop:2}}>{formatDate(worstDay.date)}</div></div>
+      </div>}
 
-      {/* Production vs Goal chart */}
       <div className="section-head">{tx(lang,'prodVsGoal')}</div>
-      <div className="card"><PressBarChart reports={reports} lang={lang} /></div>
+      <div className="card"><PressBarChart reports={reports} /></div>
 
-      {/* Daily performance */}
-      {dayRanked.length>0&&(
-        <>
-          <div className="section-head">{tx(lang,'dailyPerf')}</div>
-          <div className="card">
-            {[...dayRanked].sort((a,b)=>a.date.localeCompare(b.date)).map(({date,hit})=>(
-              <div key={date} style={{display:'flex',alignItems:'center',gap:8,marginBottom:7}}>
-                <div style={{width:60,fontSize:11,color:'#888',flexShrink:0}}>{date.slice(5)}</div>
-                <div style={{flex:1,background:'#f0f0f0',borderRadius:4,height:18,overflow:'hidden'}}>
-                  <div style={{height:'100%',width:`${Math.min(hit,100)}%`,background:hitHexColor(hit),borderRadius:4}}></div>
-                </div>
-                <div style={{width:38,fontSize:12,fontWeight:'bold',color:hitHexColor(hit),textAlign:'right'}}>{hit}%</div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      {dayRanked.length>0&&<><div className="section-head">{tx(lang,'dailyPerf')}</div>
+      <div className="card">{[...dayRanked].sort((a,b)=>a.date.localeCompare(b.date)).map(({date,hit})=>(
+        <div key={date} style={{display:'flex',alignItems:'center',gap:8,marginBottom:7}}>
+          <div style={{width:56,fontSize:11,color:'#888',flexShrink:0}}>{formatDate(date)}</div>
+          <div style={{flex:1,background:'#f0f0f0',borderRadius:4,height:18,overflow:'hidden'}}><div style={{height:'100%',width:`${Math.min(hit,100)}%`,background:hitHexColor(hit),borderRadius:4}}></div></div>
+          <div style={{width:38,fontSize:12,fontWeight:'bold',color:hitHexColor(hit),textAlign:'right'}}>{hit}%</div>
+        </div>
+      ))}</div></>}
 
-      {/* Operator Scorecard + Press Performance */}
       <div className={isDesktop?'scorecard-cols':''}>
         <div className="card" style={{marginBottom:11}}>
           <div className="section-head">{tx(lang,'opScorecard')}</div>
           {opRanked.map(o=>(
             <div key={o.name} className="scorecard-row">
-              <div className="scorecard-name">{o.name}</div>
+              <div className="scorecard-name">{o.name}{concerns.find(c=>c.name===o.name)&&<span style={{color:'#C8102E',marginLeft:6,fontSize:11}}>⚠</span>}{onFire.find(c=>c.name===o.name)&&<span style={{marginLeft:6,fontSize:11}}>🏆</span>}</div>
               <div className="scorecard-bar-wrap"><div className="scorecard-bar" style={{width:`${Math.min(o.hit,100)}%`,background:hitHexColor(o.hit)}}></div></div>
               <div className="scorecard-pct" style={{color:hitHexColor(o.hit)}}>{o.hit}%</div>
             </div>
@@ -992,6 +1264,7 @@ function OverviewTab({ lang }) {
 function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onLogout, onOpenSubmit }) {
   const [tab,setTab]=useState('overview');
   const [users,setUsers]=useState([]), [reports,setReports]=useState([]);
+  const [archivedReports,setArchivedReports]=useState([]), [showArchived,setShowArchived]=useState(false);
   const [loading,setLoading]=useState(false), [modal,setModal]=useState(null);
   const [selectedReport,setSelectedReport]=useState(null);
   const [localGoals,setLocalGoals]=useState({...goals}), [goalMsg,setGoalMsg]=useState('');
@@ -999,12 +1272,13 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
 
   useEffect(()=>{
     if (tab==='users') loadUsers();
-    else if (tab==='reports') loadReports();
+    else if (tab==='reports') { loadReports(); }
     else if (tab==='goals') setLocalGoals({...goals});
   },[tab]);
 
-  const loadUsers   =async()=>{ setLoading(true); try{const r=await gasCall('getUsers');   if(r.success)setUsers(r.users);}    catch{} setLoading(false); };
-  const loadReports =async()=>{ setLoading(true); try{const r=await gasCall('getReports'); if(r.success)setReports(r.reports);}catch{} setLoading(false); };
+  const loadUsers   =async()=>{ setLoading(true); try{const r=await gasCall('getUsers');    if(r.success)setUsers(r.users);}    catch{} setLoading(false); };
+  const loadReports =async()=>{ setLoading(true); try{const r=await gasCall('getReports');  if(r.success)setReports(r.reports);}catch{} setLoading(false); };
+  const loadArchived=async()=>{ try{const r=await gasCall('getArchivedReports'); if(r.success)setArchivedReports(r.reports);}catch{}; };
   const refreshOps  =async()=>{ try{const r=await gasCall('getOperators'); if(r.success)setOperators(r.operators);}catch{}; };
   const delUser     =async id=>{ if(!window.confirm(tx(lang,'confirmDel')))return; await gasCall('deleteUser',{id}); loadUsers(); };
   const delOperator =async id=>{ if(!window.confirm(tx(lang,'confirmDel')))return; await gasCall('deleteOperator',{id}); refreshOps(); };
@@ -1014,14 +1288,23 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
     if (r.success) { const u={}; PRESSES.forEach(p=>{u[p]=parseInt(localGoals[p],10)||0;}); setGoals(u); setGoalMsg(tx(lang,'goalsSaved')); setTimeout(()=>setGoalMsg(''),3000); }
   };
 
-  if (selectedReport) return <ReportDetail report={selectedReport} lang={lang} onBack={()=>setSelectedReport(null)} />;
+  const handleArchive=reportId=>{ setSelectedReport(null); setReports(prev=>prev.filter(r=>r.id!==reportId)); };
+  const handleRestore=async reportId=>{
+    await gasCall('archiveReport',{reportId,restore:true});
+    setArchivedReports(prev=>prev.filter(r=>r.id!==reportId));
+  };
 
-  const tabs=['overview','submit','users','operators','goals','reports'];
+  const toggleArchived=()=>{ if (!showArchived) loadArchived(); setShowArchived(v=>!v); };
+
+  if (selectedReport) return <ReportDetail report={selectedReport} lang={lang} onBack={()=>setSelectedReport(null)} onArchive={handleArchive} />;
+
+  const tabs=['overview','molders','submit','users','operators','goals','reports'];
 
   const renderContent=()=>{
     if (loading) return <div className="loading-msg">{tx(lang,'loading')}</div>;
 
-    if (tab==='overview') return <OverviewTab lang={lang} />;
+    if (tab==='overview') return <OverviewTab lang={lang} operators={operators} />;
+    if (tab==='molders')  return <MolderProfilesTab lang={lang} operators={operators} user={user} />;
 
     if (tab==='submit') return (
       <div className="submit-intro">
@@ -1040,10 +1323,7 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
           {users.map(u=>(
             <div key={u.id} className="list-row">
               <div><div className="list-row-main">{u.username}</div><div className="list-row-sub">{u.role==='manager'?tx(lang,'managerRole'):tx(lang,'lead')}{u.email?` — ${u.email}`:''}</div></div>
-              <div className="list-row-actions">
-                <button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'user',item:u})}>{tx(lang,'edit')}</button>
-                <button className="btn-sm btn-sm-danger" onClick={()=>delUser(u.id)}>{tx(lang,'delete')}</button>
-              </div>
+              <div className="list-row-actions"><button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'user',item:u})}>{tx(lang,'edit')}</button><button className="btn-sm btn-sm-danger" onClick={()=>delUser(u.id)}>{tx(lang,'delete')}</button></div>
             </div>
           ))}
         </div>
@@ -1058,10 +1338,7 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
           {operators.map(op=>(
             <div key={op.id} className="list-row">
               <div><div className="list-row-main">{op.name}</div><div className="list-row-sub">{tx(lang,'stampNo')}: {op.stampNumber}</div></div>
-              <div className="list-row-actions">
-                <button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'operator',item:op})}>{tx(lang,'edit')}</button>
-                <button className="btn-sm btn-sm-danger" onClick={()=>delOperator(op.id)}>{tx(lang,'delete')}</button>
-              </div>
+              <div className="list-row-actions"><button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'operator',item:op})}>{tx(lang,'edit')}</button><button className="btn-sm btn-sm-danger" onClick={()=>delOperator(op.id)}>{tx(lang,'delete')}</button></div>
             </div>
           ))}
         </div>
@@ -1077,8 +1354,7 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
             <div key={p} className="goal-row">
               <div className="goal-label">{tx(lang,'press')} {p}</div>
               <input className="goal-input" type="text" inputMode="numeric" pattern="[0-9]*"
-                value={localGoals[p]!=null?localGoals[p]:''}
-                onChange={e=>setLocalGoals(prev=>({...prev,[p]:e.target.value.replace(/[^0-9]/g,'')}))} />
+                value={localGoals[p]!=null?localGoals[p]:''} onChange={e=>setLocalGoals(prev=>({...prev,[p]:e.target.value.replace(/[^0-9]/g,'')}))} />
             </div>
           ))}
         </div>
@@ -1088,28 +1364,39 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
 
     if (tab==='reports') return (
       <>
-        {reports.length===0&&<div className="empty-msg" style={{padding:32}}>{tx(lang,'noReports')}</div>}
+        {reports.length===0&&<div className="empty-msg" style={{padding:24}}>{tx(lang,'noReports')}</div>}
         {reports.map(r=>{
           const issues=(r.pressData||[]).filter(p=>p.hasIssue).length;
           const stopped=(r.pressData||[]).filter(p=>!p.isRunning).length;
           return (
             <div key={r.id} className="card report-card" onClick={()=>setSelectedReport(r)}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <div>
-                  <div style={{fontWeight:'bold',fontSize:16}}>{r.date}</div>
-                  <div className="report-meta">{r.submittedBy} — {r.timestamp?new Date(r.timestamp).toLocaleTimeString():''}</div>
-                </div>
+                <div><div style={{fontWeight:'bold',fontSize:16}}>{formatDate(r.date)}</div><div className="report-meta">{r.submittedBy} · {formatDateTime(r.timestamp)}</div></div>
                 <span style={{color:'#C8102E',fontSize:22,fontWeight:'bold'}}>›</span>
               </div>
-              {(issues>0||stopped>0)&&(
-                <div className="report-flags">
-                  {issues>0&&<span className="flag flag-issue">⚠ {issues} {issues===1?'issue':'issues'}</span>}
-                  {stopped>0&&<span className="flag flag-stopped">● {stopped} not running</span>}
-                </div>
-              )}
+              {(issues>0||stopped>0)&&<div className="report-flags">{issues>0&&<span className="flag flag-issue">⚠ {issues} {issues===1?'issue':'issues'}</span>}{stopped>0&&<span className="flag flag-stopped">● {stopped} not running</span>}</div>}
             </div>
           );
         })}
+
+        {/* Archived section */}
+        <div className="archived-toggle" onClick={toggleArchived}>
+          <span className="archived-toggle-label">📦 {tx(lang,'archivedReports')}</span>
+          <span style={{fontSize:14,color:'#aaa'}}>{showArchived?'▲':'▼'}</span>
+        </div>
+        {showArchived&&(
+          <div>
+            {archivedReports.length===0&&<div className="empty-msg" style={{padding:16}}>{tx(lang,'noArchived')}</div>}
+            {archivedReports.map(r=>(
+              <div key={r.id} className="card" style={{opacity:0.75}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div><div style={{fontWeight:'bold',fontSize:15}}>{formatDate(r.date)}</div><div className="report-meta">{r.submittedBy} · {formatDateTime(r.timestamp)}</div></div>
+                  <button className="btn-sm btn-sm-green" onClick={()=>handleRestore(r.id)}>{tx(lang,'restore')}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </>
     );
 
@@ -1122,31 +1409,11 @@ function ManagerView({ lang, user, operators, setOperators, goals, setGoals, onL
         <div><div className="header-title">nVent | {tx(lang,'manager')}</div><div className="header-sub">{user.username}</div></div>
         <button className="header-btn" onClick={onLogout}>{tx(lang,'logout')}</button>
       </div>
-
-      {/* Mobile tabs */}
-      {!isDesktop&&(
-        <div className="tabs mgr-tabs-mobile">
-          {tabs.map(tk=><div key={tk} className={`tab${tab===tk?' active':''}`} onClick={()=>setTab(tk)}>{tx(lang,tk)}</div>)}
-        </div>
-      )}
-
+      {!isDesktop&&<div className="tabs mgr-tabs-mobile">{tabs.map(tk=><div key={tk} className={`tab${tab===tk?' active':''}`} onClick={()=>setTab(tk)}>{tx(lang,tk)}</div>)}</div>}
       <div className="mgr-body">
-        {/* Desktop sidebar */}
-        {isDesktop&&(
-          <div className="mgr-sidebar">
-            {tabs.map(tk=>(
-              <button key={tk} className={`mgr-sidebar-btn${tab===tk?' active':''}`} onClick={()=>setTab(tk)}>
-                {tx(lang,tk)}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="mgr-content">
-          {renderContent()}
-        </div>
+        {isDesktop&&<div className="mgr-sidebar">{tabs.map(tk=><button key={tk} className={`mgr-sidebar-btn${tab===tk?' active':''}`} onClick={()=>setTab(tk)}>{tx(lang,tk)}</button>)}</div>}
+        <div className="mgr-content">{renderContent()}</div>
       </div>
-
       {modal?.type==='user'&&<UserModal lang={lang} item={modal.item} onSave={()=>{setModal(null);loadUsers();}} onClose={()=>setModal(null)} />}
       {modal?.type==='operator'&&<OperatorModal lang={lang} item={modal.item} onSave={()=>{setModal(null);refreshOps();}} onClose={()=>setModal(null)} />}
     </div>
@@ -1187,10 +1454,7 @@ function App() {
 
   if (appLoading) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'white'}}>
-      <div style={{textAlign:'center',color:'#aaa'}}>
-        <div style={{width:36,height:4,background:'#C8102E',margin:'0 auto 16px',borderRadius:2}}></div>
-        {tx(lang||'en','loading')}
-      </div>
+      <div style={{textAlign:'center',color:'#aaa'}}><div style={{width:36,height:4,background:'#C8102E',margin:'0 auto 16px',borderRadius:2}}></div>{tx(lang||'en','loading')}</div>
     </div>
   );
 
