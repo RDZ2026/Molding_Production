@@ -243,7 +243,7 @@ const T = {
     ehPredictions:'EH Predictions',noEHPredictions:'No EH predictions yet.',
     saveEHGoal:'Save EH Goal',ehGoalSaved:'EH Goal saved.',
     whatSubmit:'What would you like to submit?',backToMenu:'Back to Menu',
-    totalProjEH:'Total Projected EH',ehGoalShort:'EH Goal',reports2:'Reports',
+    totalProjEH:'Total Projected EH',ehGoalShort:'EH Goal',reports2:'Reports',ehsummary:'EH Summary',
   },
   es:{appName:'Reporte de Moldeo',shift:'Turno 2',username:'Usuario',password:'Contrasena',signIn:'Entrar',logout:'Cerrar Sesion',
     invalidCreds:'Usuario o contrasena incorrectos.',networkErr:'Error de conexion.',loading:'Cargando...',saving:'Guardando...',
@@ -293,7 +293,7 @@ const T = {
     ehPredictions:'Predicciones EH',noEHPredictions:'Sin predicciones EH.',
     saveEHGoal:'Guardar Meta EH',ehGoalSaved:'Meta EH guardada.',
     whatSubmit:'Que deseas enviar?',backToMenu:'Volver al Menu',
-    totalProjEH:'EH Total Proyectado',ehGoalShort:'Meta EH',reports2:'Reportes',
+    totalProjEH:'EH Total Proyectado',ehGoalShort:'Meta EH',reports2:'Reportes',ehsummary:'Resumen EH',
   }
 };
 function tx(lang,key){return (T[lang]||T.en)[key]||key;}
@@ -338,7 +338,7 @@ function initPressData(goals,lastReport){
   return PRESSES.map(p=>{
     let opId='',opName='',opStamp='',mold='',partId='',partNumber='',partEhRate=0;
     if(lastReport?.pressData){const lp=lastReport.pressData.find(x=>x.pressNumber===p);if(lp){opId=lp.operatorId||'';opName=lp.operatorName||'';opStamp=lp.operatorStamp||'';mold=lp.moldNumber||'';partId=lp.partId||'';partNumber=lp.partNumber||'';partEhRate=lp.partEhRate||0;}}
-    return{pressNumber:p,operatorId:opId,operatorName:opName,operatorStamp:opStamp,good:'',scrap:'',goal:String(goals[p]!=null?goals[p]:100),notes:'',hasIssue:false,isRunning:true,notRunningReason:'',moldNumber:mold,partId,partNumber,partEhRate};
+    return{pressNumber:p,operatorId:opId,operatorName:opName,operatorStamp:opStamp,good:'',scrap:'',goal:String(goals[p]!=null?goals[p]:100),notes:'',hasIssue:false,isRunning:true,notRunningReason:'',moldNumber:mold,partId,partNumber,partEhRate,fromPrediction:false};
   });
 }
 function initEHPressData(){return PRESSES.map(p=>({pressNumber:p,partId:'',partNumber:'',partDescription:'',partEhRate:0,estimatedQty:'',isRunning:true,notRunningReason:''}));}
@@ -357,6 +357,7 @@ function generateEHPassdown(pressData,totalEH,goalEH,date,username){
   return lines;
 }
 function calcPressEH(p){if(!p.isRunning||!p.partEhRate||!p.estimatedQty)return 0;const q=parseInt(p.estimatedQty,10);return isNaN(q)||q<=0?0:q*p.partEhRate;}
+function calcActualEH(pd){return(pd||[]).reduce(function(s,p){if(!p.isRunning||!p.partEhRate||!p.good)return s;return s+(parseInt(p.good,10)||0)*p.partEhRate;},0);}
 function calcMolderStats(opName,reports){
   const nightMap={},pressMap={},weekMap={};
   reports.forEach(r=>{let nG=0,nGl=0,hi=false;(r.pressData||[]).forEach(p=>{if(p.operatorName!==opName||!p.isRunning)return;const g=parseInt(p.good||0,10),gl=parseInt(p.goal||0,10);if(!gl)return;nG+=g;nGl+=gl;if(p.hasIssue)hi=true;if(!pressMap[p.pressNumber])pressMap[p.pressNumber]={good:0,goal:0,nights:0,issues:0,molds:[]};pressMap[p.pressNumber].good+=g;pressMap[p.pressNumber].goal+=gl;pressMap[p.pressNumber].nights++;if(p.hasIssue)pressMap[p.pressNumber].issues++;if(p.moldNumber)pressMap[p.pressNumber].molds.push(p.moldNumber);});if(nGl>0){nightMap[r.date]={good:nG,goal:nGl,hit:Math.round((nG/nGl)*100),hasIssue:hi};const wk=getMondayStr(r.date);if(!weekMap[wk])weekMap[wk]={good:0,goal:0,nights:0};weekMap[wk].good+=nG;weekMap[wk].goal+=nGl;weekMap[wk].nights++;}});
@@ -466,12 +467,12 @@ function UndoOverlay({countdown,lang,onUndo}){
 
 // ── Press Cards ───────────────────────────────────────────────
 function PressCard({data,operators,parts,lang,onChange}){
-  const{pressNumber,operatorId,good,scrap,goal,notes,hasIssue,isRunning,notRunningReason,moldNumber,partId}=data;
+  const{pressNumber,operatorId,good,scrap,goal,notes,hasIssue,isRunning,notRunningReason,moldNumber,partId,fromPrediction}=data;
   const reasons=NR_REASONS[lang]||NR_REASONS.en;
   const hit=isRunning?calcHit(good,goal):null;
   const upd=(f,v)=>onChange(pressNumber,f,v);
   const handleOp=opId=>{const op=operators.find(o=>o.id===opId);upd('operatorId',opId);upd('operatorName',op?op.name:'');upd('operatorStamp',op?op.stampNumber:'');};
-  const handlePart=part=>{upd('partId',part?part.id:'');upd('partNumber',part?part.partNumber:'');upd('partEhRate',part?part.ehRate:0);};
+  const handlePart=part=>{if(fromPrediction&&partId&&(!part||part.id!==partId)){if(!window.confirm('This press was set to '+data.partNumber+' in tonight\'s prediction. Change it?'))return;}upd('partId',part?part.id:'');upd('partNumber',part?part.partNumber:'');upd('partEhRate',part?part.ehRate:0);upd('fromPrediction',false);};
   const selPart=parts.find(p=>p.id===partId)||null;
   let cls='card press-card';if(!isRunning)cls+=' is-stopped';else cls+=' is-running'+(hasIssue?' has-issue':'');
   return(
@@ -615,6 +616,19 @@ function ProductionReportView({lang,user,operators,goals,parts,lastReport,onBack
   const isDesktop=useIsDesktop();
   const[date,setDate]=useState(todayStr());
   const[items,setItems]=useState(()=>initPressData(goals,lastReport));
+  useEffect(()=>{
+    gasCall('getTodayPrediction').then(r=>{
+      if(!r.success||!r.prediction)return;
+      const pd=r.prediction.pressData;
+      setItems(prev=>prev.map(item=>{
+        const pp=pd.find(x=>x.pressNumber===item.pressNumber);
+        if(pp&&pp.partId&&!item.partId){
+          return{...item,partId:pp.partId,partNumber:pp.partNumber,partEhRate:pp.partEhRate,fromPrediction:true};
+        }
+        return item;
+      }));
+    }).catch(()=>{});
+  },[]);
   const[submitting,setSubmitting]=useState(false);const[countdown,setCountdown]=useState(5);
   const[submitted,setSubmitted]=useState(false);const[subData,setSubData]=useState(null);
   const[overallHit,setOverallHit]=useState(null);const[error,setError]=useState('');
@@ -758,7 +772,7 @@ function ReportDetail({report,lang,onBack,onArchive}){
 }
 
 // ── EH Prediction Detail (manager) ───────────────────────────
-function EHPredictionDetail({prediction,parts,lang,ehGoal,onBack}){
+function EHPredictionDetail({prediction,parts,lang,ehGoal,onBack,onDelete}){
   const[pd,setPd]=useState(prediction.pressData.map(p=>({...p})));
   const[saving,setSaving]=useState(false);const[msg,setMsg]=useState('');
   const upd=(pn,f,v)=>setPd(prev=>prev.map(p=>p.pressNumber===pn?{...p,[f]:v}:p));
@@ -790,6 +804,7 @@ function EHPredictionDetail({prediction,parts,lang,ehGoal,onBack}){
           </div>
         );})}
         <button className="btn btn-red mt-12" onClick={save} disabled={saving}>{saving?tx(lang,'saving'):tx(lang,'save')}</button>
+        <button className="btn-sm btn-sm-danger" style={{width:'100%',padding:'11px',textAlign:'center',borderRadius:8,marginTop:10,display:'block'}} onClick={()=>{if(window.confirm('Delete this EH prediction? This cannot be undone.'))onDelete(prediction.id);}}>Delete Prediction</button>
       </div>
     </div>
   );
@@ -851,6 +866,61 @@ function MolderProfilesTab({lang,operators,user}){
   return <>{sorted.map(op=><div key={op.id} className="card report-card" onClick={()=>setSelected(op)}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{flex:1,minWidth:0}}><div style={{fontWeight:'bold',fontSize:15,display:'flex',alignItems:'center',gap:6}}>{op.name}{op.isOnFire&&<span className="molder-badge badge-fire">🏆</span>}{op.isConcern&&<span className="molder-badge badge-concern">⚠</span>}</div><div style={{fontSize:12,color:'#888',marginTop:2}}>#{op.stampNumber} · {op.nightCount} {tx(lang,'nightsWorked')} this week</div>{op.lastReviewed&&<div style={{fontSize:11,color:'#bbb',marginTop:2}}>{tx(lang,'lastReviewed')}: {formatDateTime(op.lastReviewed)}</div>}</div><div style={{display:'flex',alignItems:'center',gap:10}}>{op.weekAvg!==null&&<div style={{fontSize:22,fontWeight:'bold',color:hitColor(op.weekAvg)}}>{op.weekAvg}%</div>}<span style={{color:'#C8102E',fontSize:20}}>›</span></div></div></div>)}</>;
 }
 
+
+// ── EH Summary Tab ────────────────────────────────────────────
+function EHSummaryTab({lang}){
+  const[summary,setSummary]=useState([]);
+  const[loading,setLoading]=useState(true);
+  useEffect(()=>{
+    gasCall('getEHSummary').then(r=>{if(r.success)setSummary(r.summary);setLoading(false);}).catch(()=>setLoading(false));
+  },[]);
+  if(loading)return <div className="loading-msg">{tx(lang,'loading')}</div>;
+  if(!summary.length)return <div className="empty-msg" style={{padding:32}}>No EH data yet. Submit a prediction and a production report to see the comparison.</div>;
+  return(
+    <>
+      {summary.map(({date,prediction,report})=>{
+        const predEH=prediction?prediction.totalEH:null;
+        const actualEH=report?calcActualEH(report.pressData):null;
+        let variance=null,variancePct=null;
+        if(predEH!==null&&actualEH!==null&&predEH>0){variance=actualEH-predEH;variancePct=Math.round((variance/predEH)*100);}
+        const varColor=variance===null?'#888':variance>=0?'#1e7e34':'#C8102E';
+        const hasActualParts=report&&(report.pressData||[]).some(p=>p.isRunning&&p.partEhRate&&p.good);
+        return(
+          <div key={date} className="card" style={{marginBottom:11}}>
+            <div style={{fontWeight:'bold',fontSize:16,marginBottom:10}}>{formatDate(date)}</div>
+            <div style={{display:'flex',gap:10}}>
+              <div style={{flex:1,background:'#eff3ff',borderRadius:8,padding:'10px 12px',textAlign:'center'}}>
+                <div style={{fontSize:10,color:'#888',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4,fontWeight:'bold'}}>Predicted</div>
+                {predEH!==null
+                  ?<div style={{fontSize:24,fontWeight:'bold',color:'#1a4dc3'}}>{predEH.toFixed(1)}h</div>
+                  :<div style={{fontSize:13,color:'#bbb',fontStyle:'italic',marginTop:4}}>No prediction</div>}
+                {prediction&&<div style={{fontSize:11,color:'#aaa',marginTop:3}}>{prediction.submittedBy}</div>}
+              </div>
+              <div style={{flex:1,background:actualEH!==null?'#e8f5e9':'#f5f5f5',borderRadius:8,padding:'10px 12px',textAlign:'center'}}>
+                <div style={{fontSize:10,color:'#888',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4,fontWeight:'bold'}}>Actual</div>
+                {actualEH!==null
+                  ?<div style={{fontSize:24,fontWeight:'bold',color:'#1e7e34'}}>{actualEH.toFixed(1)}h</div>
+                  :<div style={{fontSize:13,color:'#bbb',fontStyle:'italic',marginTop:4}}>{!report?'No report yet':!hasActualParts?'No parts on report':''}</div>}
+                {report&&actualEH!==null&&<div style={{fontSize:11,color:'#aaa',marginTop:3}}>{report.submittedBy}</div>}
+              </div>
+            </div>
+            {variance!==null&&(
+              <div style={{marginTop:8,padding:'8px 12px',background:'#f9f9f9',borderRadius:7,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:13,color:'#888',fontWeight:'bold'}}>Variance</span>
+                <span style={{fontWeight:'bold',fontSize:15,color:varColor}}>
+                  {variance>=0?'+':''}{variance.toFixed(1)}h &nbsp; ({variancePct>=0?'+':''}{variancePct}%)
+                </span>
+              </div>
+            )}
+            {prediction&&!report&&<div style={{marginTop:6,fontSize:12,color:'#bbb',textAlign:'center'}}>Production report not submitted yet</div>}
+            {report&&!prediction&&<div style={{marginTop:6,fontSize:12,color:'#bbb',textAlign:'center'}}>No EH prediction was submitted for this night</div>}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 // ── Overview Tab ──────────────────────────────────────────────
 function OverviewTab({lang,operators}){
   const[period,setPeriod]=useState('week');const[reports,setReports]=useState([]);const[loading,setLoading]=useState(true);
@@ -885,7 +955,7 @@ function OverviewTab({lang,operators}){
 }
 
 // ── Manager View ──────────────────────────────────────────────
-function ManagerView({lang,user,operators,setOperators,goals,setGoals,parts,setParts,settings,setSettings,onLogout,onOpenSubmit}){
+function ManagerView({lang,user,operators,setOperators,goals,setGoals,parts,setParts,settings,setSettings,lastReport,onLogout}){
   const[tab,setTab]=useState('overview');
   const[users,setUsers]=useState([]);const[reports,setReports]=useState([]);
   const[archived,setArchived]=useState([]);const[showArchived,setShowArchived]=useState(false);
@@ -894,6 +964,7 @@ function ManagerView({lang,user,operators,setOperators,goals,setGoals,parts,setP
   const[selReport,setSelReport]=useState(null);
   const[localGoals,setLocalGoals]=useState({...goals});const[goalMsg,setGoalMsg]=useState('');
   const[ehGoalInput,setEHGoalInput]=useState(String(settings.ehGoal||47.5));
+  const[submitMode,setSubmitMode]=useState(null);
   const isDesktop=useIsDesktop();
   useEffect(()=>{
     if(tab==='users')loadUsers();else if(tab==='reports')loadReports();
@@ -913,18 +984,22 @@ function ManagerView({lang,user,operators,setOperators,goals,setGoals,parts,setP
   const saveEHGoal=async()=>{const val=parseFloat(ehGoalInput)||47.5;const r=await gasCall('saveSetting',{key:'ehGoal',value:val});if(r.success){setSettings(prev=>({...prev,ehGoal:val}));setGoalMsg(tx(lang,'ehGoalSaved'));setTimeout(()=>setGoalMsg(''),3000);}};
   const handleArchive=id=>{setSelReport(null);setReports(prev=>prev.filter(r=>r.id!==id));};
   const handleRestore=async id=>{await gasCall('archiveReport',{reportId:id,restore:true});setArchived(prev=>prev.filter(r=>r.id!==id));};
+  const handleDeletePred=async id=>{await gasCall('deleteEHPrediction',{id});setEHPreds(prev=>prev.filter(p=>p.id!==id));setSelPred(null);};
   const toggleArchived=()=>{if(!showArchived)loadArchived();setShowArchived(v=>!v);};
+  if(submitMode==='prediction')return <EHPredictionView lang={lang} user={user} parts={parts} ehGoal={settings.ehGoal||47.5} onBack={()=>setSubmitMode(null)}/>;
+  if(submitMode==='report')return <ProductionReportView lang={lang} user={user} operators={operators} goals={goals} parts={parts} lastReport={lastReport} onBack={()=>setSubmitMode(null)}/>;
   if(selReport)return <ReportDetail report={selReport} lang={lang} onBack={()=>setSelReport(null)} onArchive={handleArchive}/>;
-  if(selPred)return <EHPredictionDetail prediction={selPred} parts={parts} lang={lang} ehGoal={settings.ehGoal||47.5} onBack={()=>setSelPred(null)}/>;
-  const tabs=['overview','molders','submit','users','operators','goals','parts','eh','reports'];
+  if(selPred)return <EHPredictionDetail prediction={selPred} parts={parts} lang={lang} ehGoal={settings.ehGoal||47.5} onBack={()=>setSelPred(null)} onDelete={handleDeletePred}/>;
+  const tabs=['overview','molders','submit','users','operators','goals','parts','eh','ehsummary','reports'];
   const renderContent=()=>{
     if(loading)return <div className="loading-msg">{tx(lang,'loading')}</div>;
     if(tab==='overview')return <OverviewTab lang={lang} operators={operators}/>;
     if(tab==='molders') return <MolderProfilesTab lang={lang} operators={operators} user={user}/>;
-    if(tab==='submit')  return <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',padding:'40px 20px',gap:10}}><div style={{fontSize:40}}>📋</div><div style={{fontSize:16,fontWeight:'bold'}}>{tx(lang,'openForm')}</div><div style={{fontSize:14,color:'#888'}}>{tx(lang,'openFormDesc')}</div><button className="btn btn-red" style={{maxWidth:280,width:'100%',margin:'8px auto 0'}} onClick={onOpenSubmit}>{tx(lang,'openForm')}</button></div>;
+    if(tab==='submit')  return <div style={{paddingTop:8}}><div style={{fontSize:12,fontWeight:'bold',color:'#888',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>{tx(lang,'whatSubmit')}</div>{parts.length>0&&<div className="home-option-card" onClick={()=>setSubmitMode('prediction')}><div className="home-option-icon">📊</div><div><div className="home-option-title">{tx(lang,'ehPrediction')}</div><div className="home-option-sub">{tx(lang,'ehPredictionSub')}</div></div></div>}<div className="home-option-card" onClick={()=>setSubmitMode('report')}><div className="home-option-icon">📋</div><div><div className="home-option-title">{tx(lang,'productionReport')}</div><div className="home-option-sub">{tx(lang,'productionReportSub')}</div></div></div></div>;
     if(tab==='users')   return <><button className="btn btn-red" style={{marginBottom:12}} onClick={()=>setModal({type:'user',item:null})}>+ {tx(lang,'addUser')}</button><div className="card">{users.length===0&&<div className="empty-msg">{tx(lang,'noUsers')}</div>}{users.map(u=><div key={u.id} className="list-row"><div><div className="list-row-main">{u.username}</div><div className="list-row-sub">{u.role==='manager'?tx(lang,'managerRole'):tx(lang,'lead')}{u.email?` — ${u.email}`:''}</div></div><div className="list-row-actions"><button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'user',item:u})}>{tx(lang,'edit')}</button><button className="btn-sm btn-sm-danger" onClick={()=>delUser(u.id)}>{tx(lang,'delete')}</button></div></div>)}</div></>;
     if(tab==='operators')return <><button className="btn btn-red" style={{marginBottom:12}} onClick={()=>setModal({type:'operator',item:null})}>+ {tx(lang,'addOp')}</button><div className="card">{operators.length===0&&<div className="empty-msg">{tx(lang,'noOps')}</div>}{operators.map(op=><div key={op.id} className="list-row"><div><div className="list-row-main">{op.name}</div><div className="list-row-sub">{tx(lang,'stampNo')}: {op.stampNumber}</div></div><div className="list-row-actions"><button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'operator',item:op})}>{tx(lang,'edit')}</button><button className="btn-sm btn-sm-danger" onClick={()=>delOp(op.id)}>{tx(lang,'delete')}</button></div></div>)}</div></>;
     if(tab==='parts')   return <><button className="btn btn-red" style={{marginBottom:12}} onClick={()=>setModal({type:'part',item:null})}>+ {tx(lang,'addPart')}</button><div className="card">{parts.length===0&&<div className="empty-msg">{tx(lang,'noParts')}</div>}{parts.map(p=><div key={p.id} className="list-row"><div><div className="list-row-main">{p.partNumber}</div><div className="list-row-sub">{p.description&&<span>{p.description} — </span>}{p.ehRate} EH/part</div></div><div className="list-row-actions"><button className="btn-sm btn-sm-gray" onClick={()=>setModal({type:'part',item:p})}>{tx(lang,'edit')}</button><button className="btn-sm btn-sm-danger" onClick={()=>delPart(p.id)}>{tx(lang,'delete')}</button></div></div>)}</div></>;
+    if(tab==='ehsummary')return <EHSummaryTab lang={lang}/>;
     if(tab==='eh')      return <>{ehPreds.length===0&&<div className="empty-msg" style={{padding:24}}>{tx(lang,'noEHPredictions')}</div>}{ehPreds.map(pred=>{const pct=pred.goalEH>0?Math.round((pred.totalEH/pred.goalEH)*100):0;return <div key={pred.id} className="card report-card" onClick={()=>setSelPred(pred)}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontWeight:'bold',fontSize:16}}>{formatDate(pred.date)}</div><div className="report-meta">{pred.submittedBy} · {formatDateTime(pred.timestamp)}</div></div><div style={{textAlign:'right'}}><div style={{fontSize:20,fontWeight:'bold',color:hitColor(pct)}}>{pred.totalEH.toFixed(1)}h</div><div style={{fontSize:12,color:'#888'}}>of {pred.goalEH}h ({pct}%)</div></div></div></div>;})}</>;
     if(tab==='goals')   return <>{goalMsg&&<div className="alert alert-success">{goalMsg}</div>}
       <div className="section-head" style={{marginBottom:8}}>{tx(lang,'ehGoalLabel')}</div>
@@ -985,8 +1060,7 @@ function App(){
       {screen==='language'      &&<LanguageScreen onSelect={selectLang}/>}
       {screen==='login'         &&<LoginScreen lang={lang||'en'} onLogin={handleLogin} onLangToggle={toggleLang} loading={loginLoading} error={loginError}/>}
       {screen==='lead'          &&user&&<LeadView lang={lang} user={user} operators={operators} goals={goals} parts={parts} ehGoal={settings.ehGoal||47.5} lastReport={lastReport} onLogout={handleLogout}/>}
-      {screen==='manager'       &&user&&<ManagerView lang={lang} user={user} operators={operators} setOperators={setOperators} goals={goals} setGoals={setGoals} parts={parts} setParts={setParts} settings={settings} setSettings={setSettings} onLogout={handleLogout} onOpenSubmit={()=>setScreen('managerSubmit')}/>}
-      {screen==='managerSubmit' &&user&&<ProductionReportView lang={lang} user={user} operators={operators} goals={goals} parts={parts} lastReport={lastReport} onBack={()=>setScreen('manager')}/>}
+      {screen==='manager'       &&user&&<ManagerView lang={lang} user={user} operators={operators} setOperators={setOperators} goals={goals} setGoals={setGoals} parts={parts} setParts={setParts} settings={settings} setSettings={setSettings} lastReport={lastReport} onLogout={handleLogout}/>}
     </div>
   );
 }
