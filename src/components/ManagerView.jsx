@@ -356,17 +356,24 @@ function OverviewTab({ lang, operators, shiftParam, isAdmin, userShift }) {
 
   return (
     <>
-      {/* Shift toggle for managers — admins see all, managers can toggle */}
-      {!isAdmin && userShift && (
+      {/* Shift toggle — admin: All/1st/2nd, manager: My Shift/Both */}
+      {isAdmin ? (
         <div style={{ display: 'flex', background: '#eaecef', borderRadius: 8, padding: 3, marginBottom: 14, gap: 2 }}>
-          <button onClick={() => setViewShift(userShift)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === userShift ? 'white' : 'none', color: viewShift === userShift ? '#C8102E' : '#888', boxShadow: viewShift === userShift ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
-            My Shift ({userShift === 1 ? '1st' : '2nd'})
-          </button>
-          <button onClick={() => setViewShift(null)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === null ? 'white' : 'none', color: viewShift === null ? '#C8102E' : '#888', boxShadow: viewShift === null ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
-            Both Shifts
-          </button>
+          {[null, 1, 2].map(s => (
+            <button key={String(s)} onClick={() => setViewShift(s)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === s ? 'white' : 'none', color: viewShift === s ? '#C8102E' : '#888', boxShadow: viewShift === s ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
+              {s === null ? 'All Shifts' : s === 1 ? '1st Shift' : '2nd Shift'}
+            </button>
+          ))}
         </div>
-      )}
+      ) : userShift ? (
+        <div style={{ display: 'flex', background: '#eaecef', borderRadius: 8, padding: 3, marginBottom: 14, gap: 2 }}>
+          {[userShift, null].map(s => (
+            <button key={String(s)} onClick={() => setViewShift(s)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === s ? 'white' : 'none', color: viewShift === s ? '#C8102E' : '#888', boxShadow: viewShift === s ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
+              {s === null ? 'Both Shifts' : `My Shift (${s === 1 ? '1st' : '2nd'})`}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {concerns.length > 0 && <div className="alert-section alert-section-concern"><div className="alert-section-title" style={{ color: '#C8102E' }}>⚠ {tx(lang, 'concernFlag')} — below 75%</div><div className="alert-names" style={{ color: '#C8102E' }}>{concerns.map(o => o.name).join(', ')}</div></div>}
       {onFire.length > 0 && <div className="alert-section alert-section-fire"><div className="alert-section-title" style={{ color: '#1e7e34' }}>🏆 {tx(lang, 'onFireFlag')} — 95%+ three nights in a row</div><div className="alert-names" style={{ color: '#1e7e34' }}>{onFire.map(o => o.name).join(', ')}</div></div>}
       {pf}
