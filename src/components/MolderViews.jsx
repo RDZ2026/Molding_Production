@@ -18,7 +18,7 @@ function MolderProfileDetail({ operator, lang, user, settings, onBack, onSetting
   useEffect(() => {
     setLoading(true);
     gasCall('getReportsByRange', getDateRange(period)).then(r => { if (r.success) setReports(r.reports); setLoading(false); }).catch(() => setLoading(false));
-  }, [period]);
+  }, [period]); // Note: molder profiles show all-time data for that operator regardless of shift
 
   useEffect(() => {
     gasCall('getMolderNotes', { operatorName: operator.name }).then(r => { if (r.success) setNotes(r.notes); }).catch(() => {});
