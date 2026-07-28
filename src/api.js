@@ -2,7 +2,7 @@
 export const GAS_URL = 'https://script.google.com/macros/s/AKfycbwEYnjO0kYr_Q6akgbjl7ILywxPNMYm-bk4Ee1jjOr9_8T4bb-4b3SydeBNfulZajxo/exec';
 
 export async function gasCall(action, payload = {}) {
-  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbwEYnjO0kYr_Q6akgbjl7ILywxPNMYm-bk4Ee1jjOr9_8T4bb-4b3SydeBNfulZajxo/exec') {
+  if (GAS_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
     throw new Error('GAS_URL not configured. Update src/api.js with your deployment URL.');
   }
   const res = await fetch(GAS_URL, {
