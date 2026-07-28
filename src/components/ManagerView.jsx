@@ -13,12 +13,12 @@ import { PartSearch } from './Common';
 import { calcPressEH, generateEHPassdown } from '../helpers';
 
 // ── EH Summary Tab ────────────────────────────────────────────
-function EHSummaryTab({ lang }) {
+function EHSummaryTab({ lang, shiftParam }) {
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    gasCall('getEHSummary').then(r => { if (r.success) setSummary(r.summary); setLoading(false); }).catch(() => setLoading(false));
+    gasCall('getEHSummary', shiftParam || {}).then(r => { if (r.success) setSummary(r.summary); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
@@ -316,13 +316,15 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
 }
 
 // ── Overview Tab ──────────────────────────────────────────────
-function OverviewTab({ lang, operators }) {
+function OverviewTab({ lang, operators, shiftParam, isAdmin, userShift }) {
   const [period, setPeriod] = useState('week');
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewShift, setViewShift] = useState(userShift || null);
   const isDesktop = useIsDesktop();
+  const activeShiftParam = viewShift ? { shift: viewShift } : {};
 
-  useEffect(() => { setLoading(true); gasCall('getReportsByRange', getDateRange(period)).then(r => { if (r.success) setReports(r.reports); setLoading(false); }).catch(() => setLoading(false)); }, [period]);
+  useEffect(() => { setLoading(true); gasCall('getReportsByRange', { ...getDateRange(period), ...activeShiftParam }).then(r => { if (r.success) setReports(r.reports); setLoading(false); }).catch(() => setLoading(false)); }, [period, viewShift]);
 
   const periods = [['week', tx(lang, 'thisWeek')], ['lastWeek', tx(lang, 'lastWeek')], ['month', tx(lang, 'thisMonth')]];
   const molderAlerts = reports.length && operators.length ? operators.map(op => ({ ...op, ...getMolderWeekStatus(op.name, reports) })).filter(o => o.isConcern || o.isOnFire) : [];
@@ -354,6 +356,17 @@ function OverviewTab({ lang, operators }) {
 
   return (
     <>
+      {/* Shift toggle for managers — admins see all, managers can toggle */}
+      {!isAdmin && userShift && (
+        <div style={{ display: 'flex', background: '#eaecef', borderRadius: 8, padding: 3, marginBottom: 14, gap: 2 }}>
+          <button onClick={() => setViewShift(userShift)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === userShift ? 'white' : 'none', color: viewShift === userShift ? '#C8102E' : '#888', boxShadow: viewShift === userShift ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
+            My Shift ({userShift === 1 ? '1st' : '2nd'})
+          </button>
+          <button onClick={() => setViewShift(null)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === null ? 'white' : 'none', color: viewShift === null ? '#C8102E' : '#888', boxShadow: viewShift === null ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
+            Both Shifts
+          </button>
+        </div>
+      )}
       {concerns.length > 0 && <div className="alert-section alert-section-concern"><div className="alert-section-title" style={{ color: '#C8102E' }}>⚠ {tx(lang, 'concernFlag')} — below 75%</div><div className="alert-names" style={{ color: '#C8102E' }}>{concerns.map(o => o.name).join(', ')}</div></div>}
       {onFire.length > 0 && <div className="alert-section alert-section-fire"><div className="alert-section-title" style={{ color: '#1e7e34' }}>🏆 {tx(lang, 'onFireFlag')} — 95%+ three nights in a row</div><div className="alert-names" style={{ color: '#1e7e34' }}>{onFire.map(o => o.name).join(', ')}</div></div>}
       {pf}
@@ -376,6 +389,8 @@ function OverviewTab({ lang, operators }) {
 // ── Manager View ──────────────────────────────────────────────
 export function ManagerView({ lang, user, operators, setOperators, goals, setGoals, parts, setParts, settings, setSettings, lastReport, onLogout }) {
   const isAdmin = user?.role === ROLES.ADMIN;
+  const filterShift = isAdmin ? null : (user?.shift || 2);
+  const shiftParam = filterShift ? { shift: filterShift } : {};
   const [tab, setTab] = useState('overview');
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
@@ -401,10 +416,10 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
   }, [tab]);
 
   const loadUsers = async () => { setLoading(true); try { const r = await gasCall('getUsers'); if (r.success) setUsers(r.users); } catch {} setLoading(false); };
-  const loadReports = async () => { setLoading(true); try { const r = await gasCall('getReports'); if (r.success) setReports(r.reports); } catch {} setLoading(false); };
-  const loadArchived = async () => { try { const r = await gasCall('getArchivedReports'); if (r.success) setArchived(r.reports); } catch {} };
+  const loadReports = async () => { setLoading(true); try { const r = await gasCall('getReports', shiftParam); if (r.success) setReports(r.reports); } catch {} setLoading(false); };
+  const loadArchived = async () => { try { const r = await gasCall('getArchivedReports', shiftParam); if (r.success) setArchived(r.reports); } catch {} };
   const loadParts = async () => { setLoading(true); try { const r = await gasCall('getParts'); if (r.success) setParts(r.parts); } catch {} setLoading(false); };
-  const loadEHPreds = async () => { setLoading(true); try { const r = await gasCall('getEHPredictions'); if (r.success) setEHPreds(r.predictions); } catch {} setLoading(false); };
+  const loadEHPreds = async () => { setLoading(true); try { const r = await gasCall('getEHPredictions', shiftParam); if (r.success) setEHPreds(r.predictions); } catch {} setLoading(false); };
   const refreshOps = async () => { try { const r = await gasCall('getOperators'); if (r.success) setOperators(r.operators); } catch {} };
   const delUser = async id => { if (!window.confirm(tx(lang, 'confirmDel'))) return; await gasCall('deleteUser', { id }); loadUsers(); };
   const delOp = async id => { if (!window.confirm(tx(lang, 'confirmDel'))) return; await gasCall('deleteOperator', { id }); refreshOps(); };
@@ -427,9 +442,9 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
 
   const renderContent = () => {
     if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
-    if (tab === 'overview') return <OverviewTab lang={lang} operators={operators} />;
-    if (tab === 'molders')  return <MolderProfilesTab lang={lang} operators={operators} user={user} />;
-    if (tab === 'ehsummary') return <EHSummaryTab lang={lang} />;
+    if (tab === 'overview') return <OverviewTab lang={lang} operators={operators} shiftParam={shiftParam} isAdmin={isAdmin} userShift={filterShift} />;
+    if (tab === 'molders')  return <MolderProfilesTab lang={lang} operators={operators} user={user} shiftParam={shiftParam} />;
+    if (tab === 'ehsummary') return <EHSummaryTab lang={lang} shiftParam={shiftParam} />;
     if (tab === 'submit') return (
       <div style={{ paddingTop: 8 }}>
         <div style={{ fontSize: 12, fontWeight: 'bold', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 14 }}>{tx(lang, 'whatSubmit')}</div>
