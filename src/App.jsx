@@ -21,50 +21,78 @@ export default function App() {
   const [appLoading, setAppLoading] = useState(false);
 
   const selectLang = l => { localStorage.setItem('moldingLang', l); setLang(l); setScreen('login'); };
-  const toggleLang = () => { const nl = lang === 'en' ? 'es' : 'en'; localStorage.setItem('moldingLang', nl); setLang(nl); setLoginError(''); };
+  const toggleLang = () => {
+    const nl = lang === 'en' ? 'es' : 'en';
+    localStorage.setItem('moldingLang', nl); setLang(nl); setLoginError('');
+  };
 
   const handleLogin = async (username, password) => {
     setLoginError(''); setLoginLoading(true);
-    try {
-      const result = await gasCall('login', { username, password });
-      if (result.success) {
-        setUser(result.user);
-        setLoginLoading(false);
-        setAppLoading(true);
 
-        // Viewer only needs basic data
-        if (result.user.role === ROLES.VIEWER) {
-          setAppLoading(false);
-          setScreen('viewer');
+    // Retry logic for GAS cold start — first call can timeout after idle period
+    let result;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        result = await gasCall('login', { username, password });
+        break;
+      } catch {
+        if (attempt === 0) {
+          setLoginError('Connecting to server, please wait...');
+          await new Promise(r => setTimeout(r, 2500));
+          setLoginError('');
+        } else {
+          setLoginLoading(false);
+          setLoginError(tx(lang || 'en', 'networkErr'));
           return;
         }
-
-        const [opR, goR, lrR, prR, stR] = await Promise.all([
-          gasCall('getOperators'), gasCall('getGoals'), gasCall('getLastReport'),
-          gasCall('getParts'), gasCall('getSettings'),
-        ]);
-        if (opR.success) setOperators(opR.operators);
-        if (goR.success) setGoals(prev => {
-          const m = { ...prev };
-          Object.keys(goR.goals).forEach(k => { m[parseInt(k, 10)] = parseInt(goR.goals[k], 10); });
-          return m;
-        });
-        if (lrR.success) setLastReport(lrR.report);
-        if (prR.success) setParts(prR.parts);
-        if (stR.success) setSettings(stR.settings);
-        setAppLoading(false);
-
-        const role = result.user.role;
-        if (role === ROLES.LEAD) setScreen('lead');
-        else setScreen('manager'); // manager and admin both use ManagerView
-      } else {
-        setLoginError(tx(lang || 'en', 'invalidCreds'));
-        setLoginLoading(false);
       }
-    } catch {
-      setLoginError(tx(lang || 'en', 'networkErr'));
-      setLoginLoading(false);
     }
+
+    if (!result.success) {
+      setLoginError(tx(lang || 'en', 'invalidCreds'));
+      setLoginLoading(false);
+      return;
+    }
+
+    setUser(result.user);
+    setLoginLoading(false);
+
+    // Viewer only needs basic data
+    if (result.user.role === ROLES.VIEWER) {
+      setScreen('viewer');
+      return;
+    }
+
+    setAppLoading(true);
+
+    // Shift filter — admin sees all, everyone else sees their shift only
+    const shift = result.user.role !== ROLES.ADMIN ? result.user.shift : null;
+
+    // Load all data independently — one failure won't block the rest
+    const settled = await Promise.allSettled([
+      gasCall('getOperators', shift ? { shift } : {}),
+      gasCall('getGoals'),
+      gasCall('getLastReport', shift ? { shift } : {}),
+      gasCall('getParts'),
+      gasCall('getSettings'),
+    ]);
+
+    const [opR, goR, lrR, prR, stR] = settled;
+
+    if (opR.status === 'fulfilled' && opR.value?.success) setOperators(opR.value.operators);
+    if (goR.status === 'fulfilled' && goR.value?.success) {
+      setGoals(prev => {
+        const m = { ...prev };
+        Object.keys(goR.value.goals).forEach(k => { m[parseInt(k, 10)] = parseInt(goR.value.goals[k], 10); });
+        return m;
+      });
+    }
+    if (lrR.status === 'fulfilled' && lrR.value?.success) setLastReport(lrR.value.report);
+    if (prR.status === 'fulfilled' && prR.value?.success) setParts(prR.value.parts);
+    if (stR.status === 'fulfilled' && stR.value?.success) setSettings(stR.value.settings);
+
+    setAppLoading(false);
+    setScreen(result.user.role === ROLES.LEAD ? 'lead' : 'manager');
   };
 
   const handleLogout = () => { setUser(null); setLoginError(''); setScreen('login'); };
@@ -84,7 +112,8 @@ export default function App() {
     <div className="app-wrap">
       {screen === 'language' && <LanguageScreen onSelect={selectLang} />}
       {screen === 'login' && (
-        <LoginScreen lang={lang || 'en'} onLogin={handleLogin} onLangToggle={toggleLang} loading={loginLoading} error={loginError} />
+        <LoginScreen lang={lang || 'en'} onLogin={handleLogin} onLangToggle={toggleLang}
+          loading={loginLoading} error={loginError} />
       )}
       {screen === 'lead' && user && (
         <LeadView lang={lang} user={user} operators={operators} goals={goals} parts={parts}
@@ -93,7 +122,8 @@ export default function App() {
       {screen === 'manager' && user && (
         <ManagerView lang={lang} user={user} operators={operators} setOperators={setOperators}
           goals={goals} setGoals={setGoals} parts={parts} setParts={setParts}
-          settings={settings} setSettings={setSettings} lastReport={lastReport} onLogout={handleLogout} />
+          settings={settings} setSettings={setSettings} lastReport={lastReport}
+          onLogout={handleLogout} />
       )}
       {screen === 'viewer' && user && (
         <ViewerView lang={lang} user={user} onLogout={handleLogout} />
