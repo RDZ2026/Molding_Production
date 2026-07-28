@@ -73,11 +73,12 @@ export function UserModal({ lang, item, onSave, onClose }) {
 export function OperatorModal({ lang, item, onSave, onClose }) {
   const [name, setName] = useState(item ? item.name : '');
   const [stamp, setStamp] = useState(item ? item.stampNumber : '');
+  const [shift, setShift] = useState(item ? (item.shift || 2) : 2);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const save = async () => {
     if (!name.trim() || !stamp.trim()) return; setSaving(true); setErr('');
-    const pl = item ? { id: item.id, name: name.trim(), stampNumber: stamp.trim() } : { name: name.trim(), stampNumber: stamp.trim() };
+    const pl = item ? { id: item.id, name: name.trim(), stampNumber: stamp.trim(), shift } : { name: name.trim(), stampNumber: stamp.trim(), shift };
     try { const r = await gasCall(item ? 'updateOperator' : 'addOperator', pl); if (r.success) onSave(); else { setErr(r.error || tx(lang, 'errOccurred')); setSaving(false); } } catch { setErr(tx(lang, 'networkErr')); setSaving(false); }
   };
   return (
@@ -87,6 +88,7 @@ export function OperatorModal({ lang, item, onSave, onClose }) {
         {err && <div className="alert alert-error">{err}</div>}
         <div className="field"><label className="field-label">{tx(lang, 'name')}</label><input type="text" value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label className="field-label">{tx(lang, 'stampNo')}</label><input type="text" value={stamp} onChange={e => setStamp(e.target.value)} /></div>
+        <div className="field"><label className="field-label">Shift</label><select value={shift} onChange={e => setShift(parseInt(e.target.value))}><option value={1}>1st Shift</option><option value={2}>2nd Shift</option></select></div>
         <div className="modal-footer">
           <button className="btn btn-gray" style={{ flex: 1 }} onClick={onClose}>{tx(lang, 'cancel')}</button>
           <button className="btn btn-red" style={{ flex: 1 }} onClick={save} disabled={saving}>{saving ? tx(lang, 'saving') : tx(lang, 'save')}</button>
