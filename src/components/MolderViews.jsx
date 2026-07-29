@@ -145,25 +145,50 @@ export function MolderProfilesTab({ lang, operators, user }) {
 
   return (
     <>
-      {sorted.map(op => (
-        <div key={op.id} className="card report-card" onClick={() => setSelected(op)}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 'bold', fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {op.name}
-                {op.isOnFire && <span className="molder-badge badge-fire">🏆</span>}
-                {op.isConcern && <span className="molder-badge badge-concern">⚠</span>}
+      {/* Helper to render one operator card */}
+      {(() => {
+        const isAdmin = user?.role === 'admin';
+        const shift1 = sorted.filter(op => op.shift === 1);
+        const shift2 = sorted.filter(op => op.shift !== 1);
+
+        const ShiftSection = ({ label, color, ops }) => ops.length === 0 ? null : (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 'bold', color: color, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 14px', background: color + '15', borderRadius: 8, marginBottom: 10, marginTop: 4 }}>
+              {label} — {ops.length} operator{ops.length !== 1 ? 's' : ''}
+            </div>
+            {ops.map(op => (
+              <div key={op.id} className="card report-card" onClick={() => setSelected(op)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {op.name}
+                      {op.isOnFire && <span className="molder-badge badge-fire">🏆</span>}
+                      {op.isConcern && <span className="molder-badge badge-concern">⚠</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{op.stampNumber} · {op.nightCount} {tx(lang, 'nightsWorked')} this week</div>
+                    {op.lastReviewed && <div style={{ fontSize: 11, color: '#bbb', marginTop: 2 }}>{tx(lang, 'lastReviewed')}: {formatDateTime(op.lastReviewed)}</div>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {op.weekAvg !== null && <div style={{ fontSize: 22, fontWeight: 'bold', color: hitColor(op.weekAvg) }}>{op.weekAvg}%</div>}
+                    <span style={{ color: '#C8102E', fontSize: 20 }}>›</span>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{op.stampNumber} · {op.nightCount} {tx(lang, 'nightsWorked')} this week</div>
-              {op.lastReviewed && <div style={{ fontSize: 11, color: '#bbb', marginTop: 2 }}>{tx(lang, 'lastReviewed')}: {formatDateTime(op.lastReviewed)}</div>}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {op.weekAvg !== null && <div style={{ fontSize: 22, fontWeight: 'bold', color: hitColor(op.weekAvg) }}>{op.weekAvg}%</div>}
-              <span style={{ color: '#C8102E', fontSize: 20 }}>›</span>
-            </div>
-          </div>
-        </div>
-      ))}
+            ))}
+          </>
+        );
+
+        if (isAdmin) {
+          return (
+            <>
+              <ShiftSection label="1st Shift" color="#1a4dc3" ops={shift1} />
+              {shift1.length > 0 && shift2.length > 0 && <div style={{ height: 8 }} />}
+              <ShiftSection label="2nd Shift" color="#C8102E" ops={shift2} />
+            </>
+          );
+        }
+        return <ShiftSection label="" color="#C8102E" ops={sorted} />;
+      })()}
     </>
   );
 }
