@@ -490,7 +490,7 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">nVent | {tx(lang, 'manager')}</div><div className="header-sub">{user.username}</div></div>
+        <div><div className="header-title">nVent | {tx(lang, 'manager')}</div><div className="header-sub">{user.username} {user.shift && user.role !== 'admin' ? '· ' + (user.shift === 1 ? '1st Shift' : '2nd Shift') : ''}</div></div>
         <button className="header-btn" onClick={onLogout}>{tx(lang, 'logout')}</button>
       </div>
       {!isDesktop && <div className="tabs">{tabs.map(tk => <div key={tk} className={`tab${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tx(lang, tk) || tk}</div>)}</div>}
