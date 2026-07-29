@@ -10,6 +10,7 @@ export function UserModal({ lang, item, onSave, onClose }) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(item ? item.role : 'lead');
   const [shift, setShift] = useState(item ? (item.shift || 2) : 2);
+  const [name, setName] = useState(item ? item.name || '' : '');
   const [email, setEmail] = useState(item ? item.email || '' : '');
   const [notify, setNotify] = useState(item ? item.notifyReport || false : false);
   const [saving, setSaving] = useState(false);
@@ -20,8 +21,8 @@ export function UserModal({ lang, item, onSave, onClose }) {
     setSaving(true); setErr('');
     try {
       const pl = item
-        ? { id: item.id, username: username.trim(), role, shift, email, notifyReport: notify, ...(password ? { password } : {}) }
-        : { username: username.trim(), password, role, shift, email, notifyReport: notify };
+        ? { id: item.id, username: username.trim(), role, shift, name: name.trim(), email, notifyReport: notify, ...(password ? { password } : {}) }
+        : { username: username.trim(), password, role, shift, name: name.trim(), email, notifyReport: notify };
       const r = await gasCall(item ? 'updateUser' : 'addUser', pl);
       if (r.success) onSave(); else { setErr(r.error || tx(lang, 'errOccurred')); setSaving(false); }
     } catch { setErr(tx(lang, 'networkErr')); setSaving(false); }
@@ -40,6 +41,7 @@ export function UserModal({ lang, item, onSave, onClose }) {
         <div className="modal-title">{item ? tx(lang, 'editUser') : tx(lang, 'addUser')}</div>
         {err && <div className="alert alert-error">{err}</div>}
         <div className="field"><label className="field-label">{tx(lang, 'username')}</label><input type="text" autoCapitalize="none" value={username} onChange={e => setUsername(e.target.value)} /></div>
+        <div className="field"><label className="field-label">Full Name <span style={{color:'#ccc',fontWeight:'normal',textTransform:'none',fontSize:10}}>(optional)</span></label><input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoandry Santos" /></div>
         <div className="field"><label className="field-label">{tx(lang, 'password')}{item ? ` — ${tx(lang, 'keepPw')}` : ''}</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} /></div>
         <div className="field">
           <label className="field-label">{tx(lang, 'role')}</label>
