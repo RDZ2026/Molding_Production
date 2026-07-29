@@ -6,11 +6,13 @@ import { todayStr, initPressData, initEHPressData, generatePassdown, generateEHP
 import { PressCard, EHPressCard } from './PressCards';
 import { UndoOverlay, CopyBtn } from './Common';
 
+function shiftLabel(user) { return user && user.shift === 1 ? '1st Shift' : '2nd Shift'; }
+
 export function LeadHomeScreen({ lang, user, parts, onSelect, onLogout }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">nVent | {tx(lang, 'appName')}</div><div className="header-sub">{tx(lang, 'shift')} — {user.username}</div></div>
+        <div><div className="header-title">nVent | {tx(lang, 'appName')}</div><div className="header-sub">{shiftLabel(user)} — {user.username}</div></div>
         <button className="header-btn" onClick={onLogout}>{tx(lang, 'logout')}</button>
       </div>
       <div className="scroll-area" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 40 }}>
@@ -100,7 +102,7 @@ export function EHPredictionView({ lang, user, parts, ehGoal, onBack }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">{tx(lang, 'ehPrediction')}</div><div className="header-sub">{user.username} — {tx(lang, 'shift')}</div></div>
+        <div><div className="header-title">{tx(lang, 'ehPrediction')}</div><div className="header-sub">{user.username} — {shiftLabel(user)}</div></div>
         <button className="header-btn" onClick={onBack}>{tx(lang, 'back')}</button>
       </div>
       <div className="date-bar">
@@ -221,7 +223,7 @@ export function ProductionReportView({ lang, user, operators, goals, parts, last
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">{tx(lang, 'productionReport')}</div><div className="header-sub">{tx(lang, 'shift')} — {user.username}</div></div>
+        <div><div className="header-title">{tx(lang, 'productionReport')}</div><div className="header-sub">{shiftLabel(user)} — {user.username}</div></div>
         <button className="header-btn" onClick={onBack}>{tx(lang, 'back')}</button>
       </div>
       <div className="date-bar">
