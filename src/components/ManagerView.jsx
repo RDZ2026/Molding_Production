@@ -26,7 +26,7 @@ function EHSummaryTab({ lang, shiftParam }) {
 
   return (
     <>
-      {summary.map(({ date, prediction, report }) => {
+      {summary.map(({ date, shift, prediction, report }) => {
         const predEH = prediction ? prediction.totalEH : null;
         const actualEH = report ? calcActualEH(report.pressData) : null;
         let variance = null, variancePct = null;
@@ -37,7 +37,7 @@ function EHSummaryTab({ lang, shiftParam }) {
         const hasActualParts = report && (report.pressData || []).some(p => p.isRunning && p.partEhRate && p.good);
         return (
           <div key={date} className="card" style={{ marginBottom: 11 }}>
-            <div style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 10 }}>{formatDate(date)}</div>
+            <div style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>{formatDate(date)}<span style={{ fontSize: 12, fontWeight: 'normal', color: shift === 1 ? '#1a4dc3' : '#C8102E', background: shift === 1 ? '#eff3ff' : '#fdf0f0', padding: '2px 8px', borderRadius: 12 }}>{shift === 1 ? '1st Shift' : '2nd Shift'}</span></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1, background: '#eff3ff', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4, fontWeight: 'bold' }}>Predicted</div>
