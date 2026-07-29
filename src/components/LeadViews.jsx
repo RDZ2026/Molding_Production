@@ -7,12 +7,13 @@ import { PressCard, EHPressCard } from './PressCards';
 import { UndoOverlay, CopyBtn } from './Common';
 
 function shiftLabel(user) { return user && user.shift === 1 ? '1st Shift' : '2nd Shift'; }
+function displayName(user) { return user && user.name ? user.name + ' (' + user.username + ')' : (user ? user.username : ''); }
 
 export function LeadHomeScreen({ lang, user, parts, onSelect, onLogout }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">nVent | {tx(lang, 'appName')}</div><div className="header-sub">{shiftLabel(user)} — {user.username}</div></div>
+        <div><div className="header-title">nVent | {tx(lang, 'appName')}</div><div className="header-sub">{shiftLabel(user)} — {displayName(user)}</div></div>
         <button className="header-btn" onClick={onLogout}>{tx(lang, 'logout')}</button>
       </div>
       <div className="scroll-area" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 40 }}>
@@ -69,7 +70,7 @@ export function EHPredictionView({ lang, user, parts, ehGoal, onBack }) {
   const doSubmit = async () => {
     const total = items.reduce((s, p) => s + calcPressEH(p), 0);
     try {
-      const r = await gasCall('saveEHPrediction', { date, submittedBy: user.username, shift: user.shift || 2, pressData: items.map(p => ({ ...p })), totalEH: total, goalEH: ehGoal });
+      const r = await gasCall('saveEHPrediction', { date, submittedBy: user.name ? user.name + ' (' + user.username + ')' : user.username, shift: user.shift || 2, pressData: items.map(p => ({ ...p })), totalEH: total, goalEH: ehGoal });
       if (r.success) { setFinalEH(total); setFinalData(items.map(p => ({ ...p }))); setSubmitting(false); setSubmitted(true); }
       else { setSubmitting(false); setError(r.error || tx(lang, 'errOccurred')); }
     } catch { setSubmitting(false); setError(tx(lang, 'networkErr')); }
@@ -102,7 +103,7 @@ export function EHPredictionView({ lang, user, parts, ehGoal, onBack }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">{tx(lang, 'ehPrediction')}</div><div className="header-sub">{user.username} — {shiftLabel(user)}</div></div>
+        <div><div className="header-title">{tx(lang, 'ehPrediction')}</div><div className="header-sub">{displayName(user)} — {shiftLabel(user)}</div></div>
         <button className="header-btn" onClick={onBack}>{tx(lang, 'back')}</button>
       </div>
       <div className="date-bar">
@@ -171,7 +172,7 @@ export function ProductionReportView({ lang, user, operators, goals, parts, last
     const run = items.filter(p => p.isRunning);
     const tG = run.reduce((s, p) => s + (parseInt(p.good, 10) || 0), 0);
     const tGl = run.reduce((s, p) => s + (parseInt(p.goal, 10) || 0), 0);
-    payloadRef.current = { date, submittedBy: user.username, pressData: items.map(p => ({ ...p })) };
+    payloadRef.current = { date, submittedBy: user.name ? user.name + ' (' + user.username + ')' : user.username, pressData: items.map(p => ({ ...p })) };
     setOverallHit(tGl > 0 ? Math.round((tG / tGl) * 100) : null);
     setError(''); setCountdown(5); setSubmitting(true);
   };
@@ -223,7 +224,7 @@ export function ProductionReportView({ lang, user, operators, goals, parts, last
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="app-header">
-        <div><div className="header-title">{tx(lang, 'productionReport')}</div><div className="header-sub">{shiftLabel(user)} — {user.username}</div></div>
+        <div><div className="header-title">{tx(lang, 'productionReport')}</div><div className="header-sub">{shiftLabel(user)} — {displayName(user)}</div></div>
         <button className="header-btn" onClick={onBack}>{tx(lang, 'back')}</button>
       </div>
       <div className="date-bar">
