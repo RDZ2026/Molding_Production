@@ -148,14 +148,17 @@ export function MolderProfilesTab({ lang, operators, user }) {
       {/* Helper to render one operator card */}
       {(() => {
         const isAdmin = user?.role === 'admin';
-        const shift1 = sorted.filter(op => op.shift === 1);
-        const shift2 = sorted.filter(op => op.shift !== 1);
+        // default shift to 2 for any operator without shift set
+        const shift1 = sorted.filter(op => (op.shift || 2) === 1);
+        const shift2 = sorted.filter(op => (op.shift || 2) !== 1);
 
         const ShiftSection = ({ label, color, ops }) => ops.length === 0 ? null : (
           <>
-            <div style={{ fontSize: 11, fontWeight: 'bold', color: color, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 14px', background: color + '15', borderRadius: 8, marginBottom: 10, marginTop: 4 }}>
-              {label} — {ops.length} operator{ops.length !== 1 ? 's' : ''}
-            </div>
+            {label ? (
+              <div style={{ fontSize: 11, fontWeight: 'bold', color: color, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 14px', background: color + '15', borderRadius: 8, marginBottom: 10, marginTop: 4 }}>
+                {label} — {ops.length} operator{ops.length !== 1 ? 's' : ''}
+              </div>
+            ) : null}
             {ops.map(op => (
               <div key={op.id} className="card report-card" onClick={() => setSelected(op)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
