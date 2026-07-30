@@ -367,9 +367,9 @@ function OverviewTab({ lang, operators, shiftParam, isAdmin, userShift }) {
         </div>
       ) : userShift ? (
         <div style={{ display: 'flex', background: '#eaecef', borderRadius: 8, padding: 3, marginBottom: 14, gap: 2 }}>
-          {[userShift, null].map(s => (
+          {[[userShift, userShift === 1 ? '1st Shift' : '2nd Shift'], [null, 'All Shifts']].map(([s, label]) => (
             <button key={String(s)} onClick={() => setViewShift(s)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', background: viewShift === s ? 'white' : 'none', color: viewShift === s ? '#C8102E' : '#888', boxShadow: viewShift === s ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
-              {s === null ? 'Both Shifts' : `My Shift (${s === 1 ? '1st' : '2nd'})`}
+              {label}
             </button>
           ))}
         </div>
