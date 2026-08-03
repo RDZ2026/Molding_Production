@@ -3,11 +3,13 @@ import { gasCall } from '../api';
 import { tx } from '../translations';
 import { formatDate, getDateRange, hitColor, useIsDesktop } from '../helpers';
 import { PressBarChart } from './Charts';
+import { WeeklySummaryTab } from './WeeklySummary';
 
 export function ViewerView({ lang, user, onLogout }) {
   const [period, setPeriod] = useState('week');
   const [viewShift, setViewShift] = useState(null); // null = all shifts
   const [reports, setReports] = useState([]);
+  const [activeView, setActiveView] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const isDesktop = useIsDesktop();
 
@@ -66,7 +68,25 @@ export function ViewerView({ lang, user, onLogout }) {
         <button className="header-btn" onClick={onLogout}>{tx(lang, 'logout')}</button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 60px' }}>
+      {/* Top nav */}
+      <div style={{ display:'flex', background:'#f5f5f5', borderBottom:'1px solid #eee' }}>
+        {[['dashboard','Dashboard'],['weekly','Weekly Summary']].map(([v,l])=>(
+          <button key={v} onClick={()=>setActiveView(v)}
+            style={{ flex:1, padding:'10px 4px', border:'none', borderBottom: activeView===v?'2px solid #C8102E':'2px solid transparent',
+              background:'none', fontSize:13, fontWeight: activeView===v?'bold':'normal',
+              color: activeView===v?'#C8102E':'#888', cursor:'pointer' }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {activeView === 'weekly' && (
+        <div style={{ flex:1, overflowY:'auto', padding:'12px 12px 60px' }}>
+          <WeeklySummaryTab lang={lang} user={user} shiftParam={{}} />
+        </div>
+      )}
+
+      {activeView === 'dashboard' && <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 60px' }}>
 
         {/* Shift toggle */}
         <div style={{ display: 'flex', background: '#eaecef', borderRadius: 8, padding: 3, marginBottom: 12, gap: 2 }}>
@@ -144,7 +164,7 @@ export function ViewerView({ lang, user, onLogout }) {
             </div>
           </>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
