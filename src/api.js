@@ -1,5 +1,5 @@
 // ── Update this URL after deploying your Google Apps Script ──
-export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzdgJGBG9-uBaApBWVpQp2w3z2U7MlCKsqNGoYR6nydkysbCUR5O2rfYJkwpqvMxJ5yJA/exec';
+export const GAS_URL = 'https://script.google.com/macros/s/AKfycbwEYnjO0kYr_Q6akgbjl7ILywxPNMYm-bk4Ee1jjOr9_8T4bb-4b3SydeBNfulZajxo/exec';
 
 const TIMEOUT_MS = 12000; // 12s — covers GAS cold start, then retry hits warm server
 
