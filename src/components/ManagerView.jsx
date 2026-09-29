@@ -10,6 +10,7 @@ import { MolderProfilesTab } from './MolderViews';
 import { UserModal, OperatorModal, PartModal } from './Modals';
 import { EHPredictionView, ProductionReportView } from './LeadViews';
 import { WeeklySummaryTab } from './WeeklySummary';
+import RotationView from './RotationView.jsx';
 import { PartSearch } from './Common';
 import { calcPressEH, generateEHPassdown } from '../helpers';
 
@@ -444,14 +445,15 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
   if (selReport) return <ReportDetail report={selReport} lang={lang} onBack={() => setSelReport(null)} onArchive={handleArchive} operators={operators} parts={parts} />;
   if (selPred) return <EHPredictionDetail prediction={selPred} parts={parts} lang={lang} ehGoal={settings.ehGoal || 47.5} onBack={() => setSelPred(null)} onDelete={handleDeletePred} />;
 
-  const adminTabs = ['overview', 'molders', 'submit', 'weekly', 'users', 'operators', 'goals', 'parts', 'eh', 'ehsummary', 'reports'];
-  const managerTabs = ['overview', 'molders', 'submit', 'weekly', 'eh', 'ehsummary', 'reports'];
+  const adminTabs = ['overview', 'molders', 'rotation', 'submit', 'weekly', 'users', 'operators', 'goals', 'parts', 'eh', 'ehsummary', 'reports'];
+  const managerTabs = ['overview', 'molders', 'rotation', 'submit', 'weekly', 'eh', 'ehsummary', 'reports'];
   const tabs = isAdmin ? adminTabs : managerTabs;
 
   const renderContent = () => {
     if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
     if (tab === 'overview') return <OverviewTab lang={lang} operators={operators} shiftParam={shiftParam} isAdmin={isAdmin} userShift={filterShift} />;
     if (tab === 'molders')  return <MolderProfilesTab lang={lang} operators={operators} user={user} shiftParam={shiftParam} />;
+    if (tab === 'rotation') return <RotationView user={user} />;
     if (tab === 'ehsummary') return <EHSummaryTab lang={lang} shiftParam={shiftParam} />;
     if (tab === 'weekly')     return <WeeklySummaryTab lang={lang} user={user} shiftParam={shiftParam} />;
     if (tab === 'submit') return (
@@ -495,9 +497,9 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
         <div><div className="header-title">nVent | {tx(lang, 'manager')}</div><div className="header-sub">{user.name ? user.name + ' (' + user.username + ')' : user.username}{user.shift && user.role !== 'admin' ? ' · ' + (user.shift === 1 ? '1st Shift' : '2nd Shift') : ''}</div></div>
         <button className="header-btn" onClick={onLogout}>{tx(lang, 'logout')}</button>
       </div>
-      {!isDesktop && <div className="tabs">{tabs.map(tk => <div key={tk} className={`tab${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : (tx(lang, tk) || tk)}</div>)}</div>}
+      {!isDesktop && <div className="tabs">{tabs.map(tk => <div key={tk} className={`tab${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : tk === 'rotation' ? 'Rotation' : (tx(lang, tk) || tk)}</div>)}</div>}
       <div className="mgr-body">
-        {isDesktop && <div className="mgr-sidebar">{tabs.map(tk => <button key={tk} className={`mgr-sidebar-btn${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : (tx(lang, tk) || tk)}</button>)}</div>}
+        {isDesktop && <div className="mgr-sidebar">{tabs.map(tk => <button key={tk} className={`mgr-sidebar-btn${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : tk === 'rotation' ? 'Rotation' : (tx(lang, tk) || tk)}</button>)}</div>}
         <div className="mgr-content">{renderContent()}</div>
       </div>
       {modal?.type === 'user'     && <UserModal lang={lang} item={modal.item} onSave={() => { setModal(null); loadUsers(); }} onClose={() => setModal(null)} />}
