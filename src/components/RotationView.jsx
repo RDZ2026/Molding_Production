@@ -88,15 +88,19 @@ function getWorkdaysInMonth(year, month) {
   return days;
 }
 
-function countWorkdaysBetween(startStr, endStr) {
-  const start = parseLocalDate(startStr);
-  const end   = parseLocalDate(endStr);
-  if (end <= start) return 0;
+// Returns signed workday count: positive = dateStr is after baseStr, negative = before.
+// This lets the rotation extrapolate in both directions from the base date.
+function countSignedWorkdays(baseStr, dateStr) {
+  const base = parseLocalDate(baseStr);
+  const date = parseLocalDate(dateStr);
+  if (base.getTime() === date.getTime()) return 0;
+
+  const forward = date > base;
   let count = 0;
-  const cur = new Date(start);
-  while (cur < end) {
-    if (isWeekday(cur)) count++;
-    cur.setDate(cur.getDate() + 1);
+  const cur = new Date(base);
+  while (forward ? cur < date : cur > date) {
+    if (isWeekday(cur)) count += forward ? 1 : -1;
+    cur.setDate(cur.getDate() + (forward ? 1 : -1));
   }
   return count;
 }
@@ -105,12 +109,14 @@ function computeAssignment(dateStr, settings, pressPairs) {
   if (!settings || !settings.baseDate || !settings.baseAssignment || settings.baseAssignment.length !== 9) {
     return ROTATION_RING.map(press => ({ press, operatorId: null }));
   }
-  const workdays = countWorkdaysBetween(settings.baseDate, dateStr);
-  const R   = Math.floor(workdays / (settings.frequency || 1));
+  // Signed: negative means dateStr is before baseDate (extrapolate backwards)
+  const workdays = countSignedWorkdays(settings.baseDate, dateStr);
+  const freq = settings.frequency || 1;
+  // Math.trunc keeps the sign symmetric around 0
+  const R   = Math.trunc(workdays / freq);
   const dir = settings.direction || 1;
 
   return ROTATION_RING.map((press, ringPos) => {
-    // If this position is a secondary in an active pair, mirror its primary
     const effectivePos = pressPairs[ringPos] !== undefined ? pressPairs[ringPos] : ringPos;
     const idx = ((effectivePos - R * dir) % 9 + 9) % 9;
     return { press, operatorId: settings.baseAssignment[idx] };
