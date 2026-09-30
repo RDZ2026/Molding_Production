@@ -4,30 +4,60 @@ import { gasCall } from '../api.js';
 // Press rotation ring — order determines rotation sequence
 const ROTATION_RING = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
 
-// Paired presses: maps secondary ring position -> primary ring position.
-// Secondary always mirrors primary — one operator covers both.
-//   pos 1 (454) + pos 2 (462)
-//   pos 3 (455) + pos 4 (300)
-//   pos 5 (501) + pos 6 (502)
-const PRESS_PAIRS = { 2: 1, 4: 3, 6: 5 };
-
-// Display rows — 6 effective rows instead of 9
-const PAIRED_DISPLAY_ROWS = [
-  { label: 'Press 452',       presses: [452],      ringPositions: [0] },
-  { label: 'Press 454 / 462', presses: [454, 462], ringPositions: [1, 2] },
-  { label: 'Press 455 / 300', presses: [455, 300], ringPositions: [3, 4] },
-  { label: 'Press 501 / 502', presses: [501, 502], ringPositions: [5, 6] },
-  { label: 'Press 1000',      presses: [1000],     ringPositions: [7] },
-  { label: 'Press 1200',      presses: [1200],     ringPositions: [8] },
+// The 3 possible paired groups (secondary mirrors primary when active)
+const PAIR_DEFS = [
+  { idx: 0, primary: 1, secondary: 2, label: '454 / 462' },
+  { idx: 1, primary: 3, secondary: 4, label: '455 / 300' },
+  { idx: 2, primary: 5, secondary: 6, label: '501 / 502' },
 ];
 
-// Primary ring positions (one per display row — secondary mirrors primary)
-const PRIMARY_POSITIONS = [0, 1, 3, 5, 7, 8];
-
-// 6 distinct colors, one per display row
-const POSITION_COLORS = [
-  '#c0392b','#2980b9','#27ae60','#d35400','#8e44ad','#16a085'
+// Up to 9 colors (one per row in fully-unpaired view)
+const ROW_COLORS = [
+  '#c0392b','#2980b9','#27ae60','#d35400','#8e44ad',
+  '#16a085','#f39c12','#1a252f','#7f8c8d'
 ];
+
+// Build PRESS_PAIRS map { secondaryRingPos: primaryRingPos } from active pairs array
+function buildPressPairs(pairedPresses = [false, false, false]) {
+  const map = {};
+  PAIR_DEFS.forEach(def => {
+    if (pairedPresses[def.idx]) map[def.secondary] = def.primary;
+  });
+  return map;
+}
+
+// Build display rows based on which pairs are active
+// Returns array of { label, presses, ringPositions }
+function buildDisplayRows(pairedPresses = [false, false, false]) {
+  const rows = [];
+  rows.push({ label: 'Press 452',       presses: [452],      ringPositions: [0] });
+
+  if (pairedPresses[0]) {
+    rows.push({ label: 'Press 454 / 462', presses: [454, 462], ringPositions: [1, 2] });
+  } else {
+    rows.push({ label: 'Press 454', presses: [454], ringPositions: [1] });
+    rows.push({ label: 'Press 462', presses: [462], ringPositions: [2] });
+  }
+
+  if (pairedPresses[1]) {
+    rows.push({ label: 'Press 455 / 300', presses: [455, 300], ringPositions: [3, 4] });
+  } else {
+    rows.push({ label: 'Press 455', presses: [455], ringPositions: [3] });
+    rows.push({ label: 'Press 300', presses: [300],  ringPositions: [4] });
+  }
+
+  if (pairedPresses[2]) {
+    rows.push({ label: 'Press 501 / 502', presses: [501, 502], ringPositions: [5, 6] });
+  } else {
+    rows.push({ label: 'Press 501', presses: [501], ringPositions: [5] });
+    rows.push({ label: 'Press 502', presses: [502], ringPositions: [6] });
+  }
+
+  rows.push({ label: 'Press 1000', presses: [1000], ringPositions: [7] });
+  rows.push({ label: 'Press 1200', presses: [1200], ringPositions: [8] });
+
+  return rows;
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -71,7 +101,7 @@ function countWorkdaysBetween(startStr, endStr) {
   return count;
 }
 
-function computeAssignment(dateStr, settings) {
+function computeAssignment(dateStr, settings, pressPairs) {
   if (!settings || !settings.baseDate || !settings.baseAssignment || settings.baseAssignment.length !== 9) {
     return ROTATION_RING.map(press => ({ press, operatorId: null }));
   }
@@ -80,8 +110,8 @@ function computeAssignment(dateStr, settings) {
   const dir = settings.direction || 1;
 
   return ROTATION_RING.map((press, ringPos) => {
-    // Secondary positions always mirror their primary pair
-    const effectivePos = PRESS_PAIRS[ringPos] !== undefined ? PRESS_PAIRS[ringPos] : ringPos;
+    // If this position is a secondary in an active pair, mirror its primary
+    const effectivePos = pressPairs[ringPos] !== undefined ? pressPairs[ringPos] : ringPos;
     const idx = ((effectivePos - R * dir) % 9 + 9) % 9;
     return { press, operatorId: settings.baseAssignment[idx] };
   });
@@ -94,12 +124,6 @@ function formatMonthLabel(year, month) {
 function shortDay(dateStr) {
   const d = parseLocalDate(dateStr);
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
-}
-
-// Color index by primary ring position
-function colorForPrimary(primaryRingPos) {
-  const idx = PRIMARY_POSITIONS.indexOf(primaryRingPos);
-  return idx >= 0 ? POSITION_COLORS[idx] : '#999';
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────
@@ -124,6 +148,11 @@ export default function RotationView({ user }) {
 
   const opMap = {};
   operators.forEach(op => { opMap[op.id] = op; });
+
+  // Derive active pairs and display rows from settings
+  const pairedPresses  = settings?.pairedPresses || [false, false, false];
+  const pressPairs     = buildPressPairs(pairedPresses);
+  const displayRows    = buildDisplayRows(pairedPresses);
 
   // ── Data loading ──────────────────────────────────────────────────────
 
@@ -164,14 +193,14 @@ export default function RotationView({ user }) {
 
   const calendar = {};
   workdays.forEach(dateStr => {
-    const base            = computeAssignment(dateStr, settings);
+    const base            = computeAssignment(dateStr, settings, pressPairs);
     const ov              = overrides.find(o => o.date === dateStr);
     const callouts        = ov ? (ov.callouts || []) : [];
     const manualOverrides = ov ? (ov.manualOverrides || {}) : {};
 
     calendar[dateStr] = base.map((cell, ringPos) => {
-      // Manual override on primary propagates to secondary
-      const primaryPos = PRESS_PAIRS[ringPos] !== undefined ? PRESS_PAIRS[ringPos] : ringPos;
+      // Manual override: check primary first (propagates to secondary when paired)
+      const primaryPos = pressPairs[ringPos] !== undefined ? pressPairs[ringPos] : ringPos;
       if (manualOverrides[primaryPos] !== undefined) {
         return { ...cell, operatorId: manualOverrides[primaryPos], isManual: true };
       }
@@ -220,13 +249,17 @@ export default function RotationView({ user }) {
   function exportPDF() {
     const monthLabel = formatMonthLabel(year, month);
     const shiftLabel = shift === 1 ? '1st Shift' : '2nd Shift';
+    const pairedNote = PAIR_DEFS
+      .filter(def => pairedPresses[def.idx])
+      .map(def => def.label)
+      .join(' · ');
 
     let tableHead = '<tr><th>Press</th>';
     workdays.forEach(d => { tableHead += `<th>${shortDay(d)}</th>`; });
     tableHead += '</tr>';
 
     let tableBody = '';
-    PAIRED_DISPLAY_ROWS.forEach(row => {
+    displayRows.forEach((row, rowIdx) => {
       const primaryPos = row.ringPositions[0];
       const isPaired   = row.ringPositions.length > 1;
       tableBody += `<tr><td class="press-col">${row.label}${isPaired ? '<br><span class="paired-note">1 operator</span>' : ''}</td>`;
@@ -261,13 +294,13 @@ export default function RotationView({ user }) {
 </head>
 <body>
 <h2>nVent Hoffman — Operator Rotation Schedule</h2>
-<p>${monthLabel} &nbsp;|&nbsp; ${shiftLabel} &nbsp;|&nbsp; Paired: 454/462 · 455/300 · 501/502</p>
+<p>${monthLabel} &nbsp;|&nbsp; ${shiftLabel}${pairedNote ? ` &nbsp;|&nbsp; Paired: ${pairedNote}` : ''}</p>
 <table>
 <thead>${tableHead}</thead>
 <tbody>${tableBody}</tbody>
 </table>
 <p style="margin-top:8px;font-size:8px;color:#666;">
-  Bold = manual override &nbsp;|&nbsp; Italic gray = callout (absent) &nbsp;|&nbsp; Paired presses share one operator
+  Bold = manual override &nbsp;|&nbsp; Italic gray = callout (absent)${pairedNote ? ' &nbsp;|&nbsp; Paired presses share one operator' : ''}
   ${settings ? ` &nbsp;|&nbsp; Rotates every ${settings.frequency} workday${settings.frequency > 1 ? 's' : ''}, ${settings.direction === 1 ? 'clockwise' : 'counter-clockwise'}` : ''}
 </p>
 </body>
@@ -283,6 +316,9 @@ export default function RotationView({ user }) {
 
   if (loading) return <div style={{ padding: 24, textAlign: 'center', color: '#888' }}>Loading rotation schedule...</div>;
   if (error)   return <div style={{ padding: 24, color: '#c0392b' }}>{error}</div>;
+
+  // Active pair labels for the info banner
+  const activePairLabels = PAIR_DEFS.filter(d => pairedPresses[d.idx]).map(d => d.label);
 
   return (
     <div style={{ padding: '16px 8px' }}>
@@ -303,10 +339,17 @@ export default function RotationView({ user }) {
         </div>
       </div>
 
-      {/* Paired press note */}
-      <div style={{ fontSize: 12, color: '#666', background: '#f5f5f5', borderRadius: 6, padding: '6px 12px', marginBottom: 12 }}>
-        Paired presses share one operator when understaffed: <strong>454/462 &nbsp;·&nbsp; 455/300 &nbsp;·&nbsp; 501/502</strong>
-      </div>
+      {/* Paired press note — only shown when at least one pair is active */}
+      {activePairLabels.length > 0 && (
+        <div style={{ fontSize: 12, color: '#666', background: '#fff8f0', border: '1px solid #f0cfa0', borderRadius: 6, padding: '6px 12px', marginBottom: 12 }}>
+          Understaffed pairing active: <strong>{activePairLabels.join(' · ')}</strong>
+          &nbsp;&mdash; one operator covers both presses in each pair.
+          &nbsp;<span style={{ color: '#2980b9', cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={() => canEdit && setShowSettings(true)}>
+            {canEdit ? 'Change in settings' : ''}
+          </span>
+        </div>
+      )}
 
       {/* No settings state */}
       {!settings && (
@@ -320,7 +363,7 @@ export default function RotationView({ user }) {
         </div>
       )}
 
-      {/* Calendar grid — 6 rows (pairs collapsed) */}
+      {/* Calendar grid */}
       {settings && (
         <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table style={{ borderCollapse: 'collapse', minWidth: 600, width: '100%', fontSize: 12 }}>
@@ -343,10 +386,10 @@ export default function RotationView({ user }) {
               </tr>
             </thead>
             <tbody>
-              {PAIRED_DISPLAY_ROWS.map((row, rowIdx) => {
+              {displayRows.map((row, rowIdx) => {
                 const primaryPos = row.ringPositions[0];
                 const isPaired   = row.ringPositions.length > 1;
-                const color      = POSITION_COLORS[rowIdx];
+                const color      = ROW_COLORS[rowIdx] || '#999';
                 return (
                   <tr key={row.label}>
                     <td style={pressCellStyle}>
@@ -392,14 +435,14 @@ export default function RotationView({ user }) {
       {/* Legend */}
       {settings && operators.length > 0 && (
         <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {PAIRED_DISPLAY_ROWS.map((row, rowIdx) => {
-            const primaryPos   = row.ringPositions[0];
-            const todayStr     = toDateStr(new Date());
-            const assignment   = calendar[todayStr]?.[primaryPos] || calendar[workdays[0]]?.[primaryPos];
+          {displayRows.map((row, rowIdx) => {
+            const primaryPos = row.ringPositions[0];
+            const todayStr   = toDateStr(new Date());
+            const assignment = calendar[todayStr]?.[primaryPos] || calendar[workdays[0]]?.[primaryPos];
             const op = assignment?.operatorId ? opMap[assignment.operatorId] : null;
             return (
               <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, background: POSITION_COLORS[rowIdx] }} />
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: ROW_COLORS[rowIdx] || '#999' }} />
                 <span style={{ color: '#666' }}>{row.label}</span>
                 {op && <span style={{ color: '#333' }}>— {op.name}</span>}
               </div>
@@ -439,6 +482,8 @@ export default function RotationView({ user }) {
           assignment={calendar[dayModal] || []}
           operators={operators}
           opMap={opMap}
+          displayRows={displayRows}
+          pressPairs={pressPairs}
           onSave={async (callouts, manualOverrides) => {
             await saveOverride(dayModal, callouts, manualOverrides);
             setDayModal(null);
@@ -462,38 +507,63 @@ function SettingsModal({ settings, operators, shift, onSave, onClose, saving }) 
   const [baseAssignment, setBaseAssignment] = useState(initAssignment);
   const [frequency,      setFrequency]      = useState(settings?.frequency || 1);
   const [direction,      setDirection]      = useState(settings?.direction ?? 1);
+  const [pairedPresses,  setPairedPresses]  = useState(settings?.pairedPresses || [false, false, false]);
 
-  function setOp(primaryPos, opId) {
+  const pressPairs  = buildPressPairs(pairedPresses);
+  const displayRows = buildDisplayRows(pairedPresses);
+
+  // Ring positions that need their own operator selection
+  const inputPositions = displayRows.map(r => r.ringPositions[0]);
+
+  function togglePair(idx) {
+    setPairedPresses(prev => {
+      const next = [...prev];
+      next[idx] = !next[idx];
+      // If unpairing, clear the secondary position so it needs its own selection
+      if (!next[idx]) {
+        const def = PAIR_DEFS[idx];
+        setBaseAssignment(prev2 => {
+          const a = [...prev2];
+          a[def.secondary] = '';
+          return a;
+        });
+      }
+      return next;
+    });
+  }
+
+  function setOp(ringPos, opId) {
     setBaseAssignment(prev => {
       const next = [...prev];
-      next[primaryPos] = opId;
-      // Find if this primary has a secondary pair and mirror it
-      Object.entries(PRESS_PAIRS).forEach(([sec, pri]) => {
-        if (parseInt(pri) === primaryPos) next[parseInt(sec)] = opId;
+      next[ringPos] = opId;
+      // Mirror to secondary if this position is a primary in an active pair
+      Object.entries(pressPairs).forEach(([sec, pri]) => {
+        if (parseInt(pri) === ringPos) next[parseInt(sec)] = opId;
       });
       return next;
     });
   }
 
   function handleSave() {
-    if (PRIMARY_POSITIONS.some(pos => !baseAssignment[pos])) {
+    const missing = inputPositions.filter(pos => !baseAssignment[pos]);
+    if (missing.length > 0) {
       alert('Assign an operator to every press before saving.');
       return;
     }
-    // Ensure secondary positions mirror primary before saving
+    // Force secondaries to mirror primaries for active pairs
     const final = [...baseAssignment];
-    Object.entries(PRESS_PAIRS).forEach(([sec, pri]) => {
+    Object.entries(pressPairs).forEach(([sec, pri]) => {
       final[parseInt(sec)] = final[parseInt(pri)];
     });
-    onSave({ baseDate, baseAssignment: final, frequency: parseInt(frequency), direction: parseInt(direction) });
+    onSave({ baseDate, baseAssignment: final, frequency: parseInt(frequency), direction: parseInt(direction), pairedPresses });
   }
 
-  // Only count primary positions for duplicate detection
-  const usedIds = PRIMARY_POSITIONS.map(pos => baseAssignment[pos]).filter(Boolean);
+  // Operators already assigned (for duplicate detection)
+  const usedIds = inputPositions.map(pos => baseAssignment[pos]).filter(Boolean);
 
   return (
     <div style={overlayStyle}>
-      <div style={{ ...modalStyle, maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ ...modalStyle, maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }}>
         <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>Rotation Settings</h3>
 
         <label style={labelStyle}>Starting date (first day of this assignment)</label>
@@ -508,25 +578,48 @@ function SettingsModal({ settings, operators, shift, onSave, onClose, saving }) 
           <div style={{ flex: 1 }}>
             <label style={labelStyle}>Direction</label>
             <select value={direction} onChange={e => setDirection(e.target.value)} style={inputStyle}>
-              <option value={1}>Clockwise (452→454/462→455/300→...)</option>
-              <option value={-1}>Counter-clockwise (452→1200→1000→...)</option>
+              <option value={1}>Clockwise</option>
+              <option value={-1}>Counter-clockwise</option>
             </select>
           </div>
         </div>
 
+        {/* Paired press toggles */}
+        <div style={{ marginTop: 16, padding: '12px 14px', background: '#f9f5ff', borderRadius: 8, border: '1px solid #ddd' }}>
+          <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: '#555' }}>
+            Understaffed pairs (one operator covers both presses)
+          </div>
+          {PAIR_DEFS.map(def => (
+            <label key={def.idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, cursor: 'pointer', fontSize: 13 }}>
+              <input
+                type="checkbox"
+                checked={pairedPresses[def.idx]}
+                onChange={() => togglePair(def.idx)}
+              />
+              <span>
+                <strong>{def.label}</strong>
+                <span style={{ color: '#888', marginLeft: 6 }}>
+                  {pairedPresses[def.idx] ? '— paired (1 operator)' : '— individual (separate operators)'}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {/* Starting assignment */}
         <div style={{ marginTop: 16 }}>
           <label style={{ ...labelStyle, display: 'block', marginBottom: 8 }}>
             Starting assignment on {baseDate}
           </label>
-          {PAIRED_DISPLAY_ROWS.map((row, rowIdx) => {
+          {displayRows.map((row, rowIdx) => {
             const primaryPos = row.ringPositions[0];
             const isPaired   = row.ringPositions.length > 1;
             const selected   = baseAssignment[primaryPos];
             return (
               <div key={row.label} style={{ marginBottom: isPaired ? 10 : 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: POSITION_COLORS[rowIdx], flexShrink: 0 }} />
-                  <span style={{ width: 120, fontSize: 13, fontWeight: 600 }}>{row.label}</span>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: ROW_COLORS[rowIdx] || '#999', flexShrink: 0 }} />
+                  <span style={{ width: 130, fontSize: 13, fontWeight: 600 }}>{row.label}</span>
                   <select value={selected} onChange={e => setOp(primaryPos, e.target.value)}
                     style={{ ...inputStyle, flex: 1, margin: 0 }}>
                     <option value="">— Select operator —</option>
@@ -539,7 +632,7 @@ function SettingsModal({ settings, operators, shift, onSave, onClose, saving }) 
                   </select>
                 </div>
                 {isPaired && (
-                  <div style={{ marginLeft: 114, fontSize: 11, color: '#e67e22', marginTop: 2 }}>
+                  <div style={{ marginLeft: 126, fontSize: 11, color: '#e67e22', marginTop: 2 }}>
                     One operator runs both presses
                   </div>
                 )}
@@ -561,7 +654,7 @@ function SettingsModal({ settings, operators, shift, onSave, onClose, saving }) 
 
 // ── Day Override Modal ──────────────────────────────────────────────────────
 
-function DayModal({ dateStr, override, assignment, operators, opMap, onSave, onClose, saving }) {
+function DayModal({ dateStr, override, assignment, operators, opMap, displayRows, pressPairs, onSave, onClose, saving }) {
   const [callouts,        setCallouts]        = useState(override.callouts || []);
   const [manualOverrides, setManualOverrides] = useState(override.manualOverrides || {});
 
@@ -579,14 +672,12 @@ function DayModal({ dateStr, override, assignment, operators, opMap, onSave, onC
       const next = { ...prev };
       if (opId === '') {
         delete next[primaryPos];
-        // Also clear secondary if set
-        Object.entries(PRESS_PAIRS).forEach(([sec, pri]) => {
+        Object.entries(pressPairs).forEach(([sec, pri]) => {
           if (parseInt(pri) === primaryPos) delete next[parseInt(sec)];
         });
       } else {
         next[primaryPos] = opId;
-        // Mirror to secondary
-        Object.entries(PRESS_PAIRS).forEach(([sec, pri]) => {
+        Object.entries(pressPairs).forEach(([sec, pri]) => {
           if (parseInt(pri) === primaryPos) next[parseInt(sec)] = opId;
         });
       }
@@ -612,11 +703,11 @@ function DayModal({ dateStr, override, assignment, operators, opMap, onSave, onC
           ))}
         </div>
 
-        {/* Manual overrides — 6 rows */}
+        {/* Manual overrides */}
         <div>
           <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: '#333' }}>Manual press assignment (optional)</div>
           <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>Overrides rotation for this day only. Leave blank to use rotation.</div>
-          {PAIRED_DISPLAY_ROWS.map((row, rowIdx) => {
+          {displayRows.map((row, rowIdx) => {
             const primaryPos  = row.ringPositions[0];
             const isPaired    = row.ringPositions.length > 1;
             const computed    = assignment[primaryPos];
@@ -624,8 +715,8 @@ function DayModal({ dateStr, override, assignment, operators, opMap, onSave, onC
             return (
               <div key={row.label} style={{ marginBottom: isPaired ? 10 : 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: POSITION_COLORS[rowIdx], flexShrink: 0 }} />
-                  <span style={{ width: 120, fontSize: 13, fontWeight: 600 }}>{row.label}</span>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: ROW_COLORS[rowIdx] || '#999', flexShrink: 0 }} />
+                  <span style={{ width: 130, fontSize: 13, fontWeight: 600 }}>{row.label}</span>
                   <select
                     value={manualOverrides[primaryPos] !== undefined ? manualOverrides[primaryPos] : ''}
                     onChange={e => setManual(primaryPos, e.target.value)}
@@ -639,7 +730,7 @@ function DayModal({ dateStr, override, assignment, operators, opMap, onSave, onC
                   </select>
                 </div>
                 {isPaired && (
-                  <div style={{ marginLeft: 114, fontSize: 11, color: '#e67e22', marginTop: 2 }}>
+                  <div style={{ marginLeft: 126, fontSize: 11, color: '#e67e22', marginTop: 2 }}>
                     Applies to both presses
                   </div>
                 )}
