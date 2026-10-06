@@ -7,8 +7,80 @@ import { LeadView } from './components/LeadViews';
 import { ManagerView } from './components/ManagerView';
 import { ViewerView } from './components/ViewerView';
 
-// ── Operator Submit Screen (inline — no separate file needed) ──────────────
+// ── Press numbers for Molding department ─────────────────────────────────────
+const PRESS_NUMBERS = [300, 452, 454, 455, 462, 501, 502, 1000, 1200];
+
+// ── Operator screen translations ──────────────────────────────────────────────
+const OT = {
+  en: {
+    title: 'End-of-Shift Production Report',
+    shiftLabel: 'Shift',
+    role: 'Operator',
+    logout: 'Log Out',
+    successMsg: 'Report submitted. Your supervisor will review it.',
+    alreadyMsg: (status) => `Already submitted for this date (status: ${status}). You can update below.`,
+    pressLabel: 'Press #',
+    pressPlaceholder: 'Select press...',
+    dateLabel: 'Report Date',
+    partLabel: 'Part Number',
+    partPlaceholder: 'Type part number to search...',
+    noPartsMsg: 'No matching parts found',
+    goodLabel: 'Good Parts',
+    scrapLabel: 'Scrap',
+    issueLabel: 'Report an Issue',
+    issueSubLabel: 'Machine, material, safety, or quality concern',
+    notesLabel: 'Notes',
+    notesOptional: '(optional)',
+    notesPlaceholder: 'Any additional notes...',
+    issuePlaceholder: 'Describe the issue...',
+    submitting: 'Submitting...',
+    updateBtn: 'Update Report',
+    submitBtn: 'Submit End-of-Shift Report',
+    errSave: 'Error saving. Try again.',
+    errNet: 'Network error. Try again.',
+    loading: 'Loading...',
+    footer: (shift) => `nVent Hoffman · Molding · Shift ${shift}`,
+  },
+  es: {
+    title: 'Reporte de Producción – Fin de Turno',
+    shiftLabel: 'Turno',
+    role: 'Operador',
+    logout: 'Cerrar Sesión',
+    successMsg: 'Reporte enviado. Su supervisor lo revisará.',
+    alreadyMsg: (status) => `Ya enviaste un reporte para esta fecha (estado: ${status}). Puedes actualizarlo abajo.`,
+    pressLabel: 'Prensa #',
+    pressPlaceholder: 'Selecciona prensa...',
+    dateLabel: 'Fecha del Reporte',
+    partLabel: 'Número de Parte',
+    partPlaceholder: 'Escribe el número de parte...',
+    noPartsMsg: 'No se encontraron partes',
+    goodLabel: 'Partes Buenas',
+    scrapLabel: 'Desperdicio',
+    issueLabel: 'Reportar un Problema',
+    issueSubLabel: 'Problema de máquina, material, seguridad o calidad',
+    notesLabel: 'Notas',
+    notesOptional: '(opcional)',
+    notesPlaceholder: 'Notas adicionales...',
+    issuePlaceholder: 'Describe el problema...',
+    submitting: 'Enviando...',
+    updateBtn: 'Actualizar Reporte',
+    submitBtn: 'Enviar Reporte de Fin de Turno',
+    errSave: 'Error al guardar. Intenta de nuevo.',
+    errNet: 'Error de red. Intenta de nuevo.',
+    loading: 'Cargando...',
+    footer: (shift) => `nVent Hoffman · Molding · Turno ${shift}`,
+  },
+};
+
+// ── Operator Submit Screen (inline — no separate file needed) ─────────────────
 function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
+  const t = OT[lang === 'es' ? 'es' : 'en'];
+  const todayStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const [reportDate, setReportDate] = useState(todayStr);
   const [pressNumber, setPressNumber] = useState('');
   const [partSearch, setPartSearch] = useState('');
   const [selectedPart, setSelectedPart] = useState(null);
@@ -33,6 +105,7 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
           setScrap(String(s.scrap ?? ''));
           setHasIssue(!!s.hasIssue);
           setNotes(s.notes || '');
+          if (s.reportDate) setReportDate(s.reportDate);
           if (s.partId) setSelectedPart({ id: s.partId, partNumber: s.partNumber, description: '' });
         }
       })
@@ -54,6 +127,7 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
         operatorName: user.name,
         operatorStamp: user.stampNumber || '',
         shift: user.shift || shift,
+        reportDate,
         pressNumber: parseInt(pressNumber),
         partId: selectedPart.id,
         partNumber: selectedPart.partNumber,
@@ -68,10 +142,10 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
         setSuccess(true);
         setSubmitted({ ...pl, id: r.id || submitted?.id, status: 'pending' });
       } else {
-        setErr(r.error || 'Error saving. Try again.');
+        setErr(r.error || t.errSave);
       }
     } catch {
-      setErr('Network error. Try again.');
+      setErr(t.errNet);
     }
     setSaving(false);
   };
@@ -80,7 +154,7 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
       <div style={{ textAlign: 'center', color: '#aaa' }}>
         <div style={{ width: 36, height: 4, background: '#C8102E', margin: '0 auto 16px', borderRadius: 2 }} />
-        Loading...
+        {t.loading}
       </div>
     </div>
   );
@@ -94,28 +168,42 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: 18 }}>{user.name || user.username}</div>
-          <div style={{ color: '#888', fontSize: 13 }}>Shift {user.shift || shift} · Operator</div>
+          <div style={{ color: '#888', fontSize: 13 }}>{t.shiftLabel} {user.shift || shift} · {t.role}</div>
         </div>
-        <button onClick={onLogout} style={{ background: 'none', border: '1px solid #ddd', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', color: '#666' }}>Log Out</button>
+        <button onClick={onLogout} style={{ background: 'none', border: '1px solid #ddd', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', color: '#666' }}>{t.logout}</button>
       </div>
       <div style={{ height: 4, background: '#C8102E', borderRadius: 2, marginBottom: 24 }} />
-      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 20 }}>End-of-Shift Production Report</div>
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 20 }}>{t.title}</div>
 
-      {success && <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#166534', fontWeight: 600 }}>Report submitted. Your supervisor will review it.</div>}
-      {submitted && !success && <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#9a3412', fontSize: 13 }}>Already submitted today (status: <strong>{submitted.status || 'pending'}</strong>). You can update below.</div>}
+      {success && <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#166534', fontWeight: 600 }}>{t.successMsg}</div>}
+      {submitted && !success && <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#9a3412', fontSize: 13 }}>{t.alreadyMsg(submitted.status || 'pending')}</div>}
       {err && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#991b1b' }}>{err}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+        {/* Report Date */}
         <div>
-          <label style={lbl}>Press #</label>
+          <label style={lbl}>{t.dateLabel}</label>
+          <input
+            type="date"
+            value={reportDate}
+            onChange={e => setReportDate(e.target.value)}
+            style={inp}
+          />
+        </div>
+
+        {/* Press Number */}
+        <div>
+          <label style={lbl}>{t.pressLabel}</label>
           <select value={pressNumber} onChange={e => setPressNumber(e.target.value)} style={inp}>
-            <option value="">Select press...</option>
-            {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>Press {n}</option>)}
+            <option value="">{t.pressPlaceholder}</option>
+            {PRESS_NUMBERS.map(n => <option key={n} value={n}>Press {n}</option>)}
           </select>
         </div>
 
+        {/* Part Number */}
         <div>
-          <label style={lbl}>Part Number</label>
+          <label style={lbl}>{t.partLabel}</label>
           {selectedPart ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', border: '1.5px solid #C8102E', borderRadius: 8, background: '#fff5f5' }}>
               <div style={{ flex: 1 }}>
@@ -126,7 +214,7 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
             </div>
           ) : (
             <div style={{ position: 'relative' }}>
-              <input type="text" value={partSearch} onChange={e => setPartSearch(e.target.value)} placeholder="Type part number to search..." autoCapitalize="none" style={inp} />
+              <input type="text" value={partSearch} onChange={e => setPartSearch(e.target.value)} placeholder={t.partPlaceholder} autoCapitalize="none" style={inp} />
               {filteredParts.length > 0 && (
                 <div style={{ position: 'absolute', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 8px 8px', maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                   {filteredParts.map(p => (
@@ -137,42 +225,45 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
                   ))}
                 </div>
               )}
-              {partSearch.length >= 2 && filteredParts.length === 0 && <div style={{ marginTop: 6, color: '#aaa', fontSize: 13 }}>No matching parts found</div>}
+              {partSearch.length >= 2 && filteredParts.length === 0 && <div style={{ marginTop: 6, color: '#aaa', fontSize: 13 }}>{t.noPartsMsg}</div>}
             </div>
           )}
         </div>
 
+        {/* Good / Scrap */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <label style={lbl}>Good Parts</label>
+            <label style={lbl}>{t.goodLabel}</label>
             <input type="number" inputMode="numeric" value={good} onChange={e => setGood(e.target.value)} placeholder="0" style={{ ...inp, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }} />
           </div>
           <div>
-            <label style={lbl}>Scrap</label>
+            <label style={lbl}>{t.scrapLabel}</label>
             <input type="number" inputMode="numeric" value={scrap} onChange={e => setScrap(e.target.value)} placeholder="0" style={{ ...inp, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }} />
           </div>
         </div>
 
+        {/* Issue toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer' }} onClick={() => setHasIssue(!hasIssue)}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Report an Issue</div>
-            <div style={{ color: '#888', fontSize: 12 }}>Machine, material, safety, or quality concern</div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{t.issueLabel}</div>
+            <div style={{ color: '#888', fontSize: 12 }}>{t.issueSubLabel}</div>
           </div>
           <div style={{ width: 44, height: 24, borderRadius: 12, background: hasIssue ? '#C8102E' : '#ddd', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
             <div style={{ position: 'absolute', top: 2, left: hasIssue ? 22 : 2, width: 20, height: 20, borderRadius: 10, background: 'white', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }} />
           </div>
         </div>
 
+        {/* Notes */}
         <div>
-          <label style={lbl}>Notes {!hasIssue && <span style={{ color: '#ccc', fontWeight: 400, textTransform: 'none', marginLeft: 6, fontSize: 11 }}>(optional)</span>}</label>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={hasIssue ? 'Describe the issue...' : 'Any additional notes...'} style={{ ...inp, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
+          <label style={lbl}>{t.notesLabel} {!hasIssue && <span style={{ color: '#ccc', fontWeight: 400, textTransform: 'none', marginLeft: 6, fontSize: 11 }}>{t.notesOptional}</span>}</label>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={hasIssue ? t.issuePlaceholder : t.notesPlaceholder} style={{ ...inp, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
         </div>
 
         <button onClick={handleSubmit} disabled={saving || !canSubmit} style={{ width: '100%', padding: 16, background: canSubmit ? '#C8102E' : '#e5e7eb', color: canSubmit ? 'white' : '#9ca3af', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: canSubmit ? 'pointer' : 'default' }}>
-          {saving ? 'Submitting...' : submitted ? 'Update Report' : 'Submit End-of-Shift Report'}
+          {saving ? t.submitting : submitted ? t.updateBtn : t.submitBtn}
         </button>
       </div>
-      <div style={{ marginTop: 32, textAlign: 'center', color: '#ddd', fontSize: 11 }}>nVent Hoffman · Molding · Shift {user.shift || shift}</div>
+      <div style={{ marginTop: 32, textAlign: 'center', color: '#ddd', fontSize: 11 }}>{t.footer(user.shift || shift)}</div>
     </div>
   );
 }
@@ -225,6 +316,9 @@ export default function App() {
       return;
     }
 
+    // Normalize role to lowercase so sheet casing ('Operator' vs 'operator') never matters
+    result.user.role = (result.user.role || '').toLowerCase().trim();
+
     setUser(result.user);
     setLoginLoading(false);
 
@@ -234,7 +328,7 @@ export default function App() {
       return;
     }
 
-    // Operator — only needs operators list + parts for their shift
+    // Operator — only needs parts for their shift
     if (result.user.role === 'operator') {
       setAppLoading(true);
       const opShift = result.user.shift || 2;
