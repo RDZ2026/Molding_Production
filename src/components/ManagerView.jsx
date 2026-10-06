@@ -148,8 +148,6 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
   const [resending, setResending] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [msg, setMsg] = useState('');
-  const [editingPress, setEditingPress] = useState(null);
-  const [moldInput, setMoldInput] = useState('');
   const [localData, setLocalData] = useState(report.pressData || []);
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState([]);
@@ -161,16 +159,12 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
 
   const resend = async () => { setResending(true); setMsg(''); try { const r = await gasCall('resendEmail', { reportId: report.id }); setMsg(r.success ? 'Email re-sent.' : 'Error: ' + (r.error || '?')); } catch { setMsg(tx(lang, 'networkErr')); } setResending(false); };
   const handleArchive = async () => { if (!window.confirm(tx(lang, 'confirmArchive'))) return; setArchiving(true); try { const r = await gasCall('archiveReport', { reportId: report.id }); if (r.success) onArchive(report.id); } catch { setMsg(tx(lang, 'networkErr')); } setArchiving(false); };
-  const saveMold = async resendEmail => {
-    const pn = editingPress;
-    try { const r = await gasCall('editReport', { reportId: report.id, pressNumber: pn, updates: { moldNumber: moldInput }, resendEmail }); if (r.success) { setLocalData(prev => prev.map(p => String(p.pressNumber) === String(pn) ? { ...p, moldNumber: moldInput } : p)); setMsg(resendEmail ? 'Saved and re-sent.' : 'Saved.'); } else setMsg('Error: ' + (r.error || '?')); } catch { setMsg(tx(lang, 'networkErr')); }
-    setEditingPress(null);
-  };
 
   const startEdit = () => { setEditItems(localData.map(p => ({ ...p }))); setEditMode(true); };
   const cancelEdit = () => { setEditMode(false); setEditItems([]); };
   const handleEditChange = (pressNum, field, val) => setEditItems(prev => prev.map(p => p.pressNumber === pressNum ? { ...p, [field]: val } : p));
   const handleEditOp = (pressNum, opId, opsList) => { const op = opsList.find(o => o.id === opId); handleEditChange(pressNum, 'operatorId', opId); handleEditChange(pressNum, 'operatorName', op ? op.name : ''); handleEditChange(pressNum, 'operatorStamp', op ? op.stampNumber : ''); };
+  const handleEditPart = (pressNum, part) => { handleEditChange(pressNum, 'partId', part ? part.id : ''); handleEditChange(pressNum, 'partNumber', part ? part.partNumber : ''); handleEditChange(pressNum, 'partEhRate', part ? part.ehRate : 0); };
 
   const saveFullEdit = async () => {
     setSavingEdit(true); setMsg('');
@@ -198,7 +192,7 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
     setSavingDate(false);
   };
 
-  // If in full edit mode, show editable press cards
+  // Full edit mode — all fields editable including part number
   if (editMode) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -208,45 +202,54 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
         </div>
         <div className="scroll-area">
           {msg && <div className="alert alert-error">{msg}</div>}
-          <div className="alert alert-info" style={{ marginBottom: 12 }}>Editing all fields. Press running status, operator, counts, and notes are all adjustable.</div>
+          <div className="alert alert-info" style={{ marginBottom: 12 }}>Editing all fields. Running status, operator, part, counts, and notes are all adjustable.</div>
           <div className={isDesktop ? 'press-grid' : ''}>
-            {editItems.map(p => (
-              <div key={p.pressNumber} className={`card press-card ${!p.isRunning ? 'is-stopped' : p.hasIssue ? 'is-running has-issue' : 'is-running'}`}>
-                <div className="press-card-top">
-                  <div className="press-num">{tx(lang, 'press')} {p.pressNumber}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span className={`press-badge ${!p.isRunning ? 'badge-stopped' : p.hasIssue ? 'badge-issue' : 'badge-ok'}`}>{!p.isRunning ? tx(lang, 'stopped') : p.hasIssue ? tx(lang, 'issue') : tx(lang, 'ok')}</span>
-                    <div className="nr-toggle-wrap"><span className="nr-toggle-label">{tx(lang, 'notRunning')}</span>
-                      <label className="sw" htmlFor={`edit-nr-${p.pressNumber}`}><input id={`edit-nr-${p.pressNumber}`} type="checkbox" checked={!p.isRunning} onChange={e => handleEditChange(p.pressNumber, 'isRunning', !e.target.checked)} /><span className="sw-track"></span></label>
+            {editItems.map(p => {
+              const selPart = parts ? parts.find(pt => pt.id === p.partId) || null : null;
+              return (
+                <div key={p.pressNumber} className={`card press-card ${!p.isRunning ? 'is-stopped' : p.hasIssue ? 'is-running has-issue' : 'is-running'}`}>
+                  <div className="press-card-top">
+                    <div className="press-num">{tx(lang, 'press')} {p.pressNumber}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span className={`press-badge ${!p.isRunning ? 'badge-stopped' : p.hasIssue ? 'badge-issue' : 'badge-ok'}`}>{!p.isRunning ? tx(lang, 'stopped') : p.hasIssue ? tx(lang, 'issue') : tx(lang, 'ok')}</span>
+                      <div className="nr-toggle-wrap"><span className="nr-toggle-label">{tx(lang, 'notRunning')}</span>
+                        <label className="sw" htmlFor={`edit-nr-${p.pressNumber}`}><input id={`edit-nr-${p.pressNumber}`} type="checkbox" checked={!p.isRunning} onChange={e => handleEditChange(p.pressNumber, 'isRunning', !e.target.checked)} /><span className="sw-track"></span></label>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="field"><label className="field-label">{tx(lang, 'operator')}</label>
-                  <select value={p.operatorId || ''} onChange={e => handleEditOp(p.pressNumber, e.target.value, operators)}>
-                    <option value="">{tx(lang, 'selectOp')}</option>
-                    {operators.map(op => <option key={op.id} value={op.id}>{op.name} — #{op.stampNumber}</option>)}
-                  </select>
-                </div>
-                {p.isRunning ? (<>
-                  <div className="three-col" style={{ marginBottom: 8 }}>
-                    <div><div className="col-label">{tx(lang, 'good')}</div><input type="text" inputMode="numeric" value={p.good || ''} placeholder="0" onChange={e => handleEditChange(p.pressNumber, 'good', e.target.value.replace(/[^0-9]/g, ''))} /></div>
-                    <div><div className="col-label">{tx(lang, 'scrap')}</div><input type="text" inputMode="numeric" value={p.scrap || ''} placeholder="0" onChange={e => handleEditChange(p.pressNumber, 'scrap', e.target.value.replace(/[^0-9]/g, ''))} /></div>
-                    <div><div className="col-label">{tx(lang, 'goal')}</div><input type="text" inputMode="numeric" value={p.goal || ''} onChange={e => handleEditChange(p.pressNumber, 'goal', e.target.value.replace(/[^0-9]/g, ''))} /></div>
-                  </div>
-                  <div className="toggle-row"><span className="toggle-text">⚠ {tx(lang, 'hadIssue')}</span>
-                    <label className="sw" htmlFor={`edit-iss-${p.pressNumber}`}><input id={`edit-iss-${p.pressNumber}`} type="checkbox" checked={!!p.hasIssue} onChange={e => handleEditChange(p.pressNumber, 'hasIssue', e.target.checked)} /><span className="sw-track"></span></label>
-                  </div>
-                  <div className="field" style={{ marginTop: 8 }}><label className="field-label">{tx(lang, 'notes')}</label><textarea value={p.notes || ''} placeholder={tx(lang, 'notesHint')} onChange={e => handleEditChange(p.pressNumber, 'notes', e.target.value)} /></div>
-                </>) : (
-                  <div className="field"><label className="field-label">{tx(lang, 'reason')}</label>
-                    <select value={p.notRunningReason || ''} onChange={e => handleEditChange(p.pressNumber, 'notRunningReason', e.target.value)}>
-                      <option value="">{tx(lang, 'selectReason')}</option>
-                      {['No Operator','Press Breakdown','Scheduled to Not Run','Mold Change / Tooling Change','Material Shortage','Waiting on Maintenance','Other'].map(r => <option key={r} value={r}>{r}</option>)}
+                  <div className="field"><label className="field-label">{tx(lang, 'operator')}</label>
+                    <select value={p.operatorId || ''} onChange={e => handleEditOp(p.pressNumber, e.target.value, operators)}>
+                      <option value="">{tx(lang, 'selectOp')}</option>
+                      {operators.map(op => <option key={op.id} value={op.id}>{op.name} — #{op.stampNumber}</option>)}
                     </select>
                   </div>
-                )}
-              </div>
-            ))}
+                  {p.isRunning ? (<>
+                    {parts && parts.length > 0 && (
+                      <div className="field">
+                        <label className="field-label">{tx(lang, 'part')}</label>
+                        <PartSearch parts={parts} selectedPart={selPart} onSelect={pt => handleEditPart(p.pressNumber, pt)} placeholder={tx(lang, 'searchPart')} />
+                      </div>
+                    )}
+                    <div className="three-col" style={{ marginBottom: 8 }}>
+                      <div><div className="col-label">{tx(lang, 'good')}</div><input type="text" inputMode="numeric" value={p.good || ''} placeholder="0" onChange={e => handleEditChange(p.pressNumber, 'good', e.target.value.replace(/[^0-9]/g, ''))} /></div>
+                      <div><div className="col-label">{tx(lang, 'scrap')}</div><input type="text" inputMode="numeric" value={p.scrap || ''} placeholder="0" onChange={e => handleEditChange(p.pressNumber, 'scrap', e.target.value.replace(/[^0-9]/g, ''))} /></div>
+                      <div><div className="col-label">{tx(lang, 'goal')}</div><input type="text" inputMode="numeric" value={p.goal || ''} onChange={e => handleEditChange(p.pressNumber, 'goal', e.target.value.replace(/[^0-9]/g, ''))} /></div>
+                    </div>
+                    <div className="toggle-row"><span className="toggle-text">⚠ {tx(lang, 'hadIssue')}</span>
+                      <label className="sw" htmlFor={`edit-iss-${p.pressNumber}`}><input id={`edit-iss-${p.pressNumber}`} type="checkbox" checked={!!p.hasIssue} onChange={e => handleEditChange(p.pressNumber, 'hasIssue', e.target.checked)} /><span className="sw-track"></span></label>
+                    </div>
+                    <div className="field" style={{ marginTop: 8 }}><label className="field-label">{tx(lang, 'notes')}</label><textarea value={p.notes || ''} placeholder={tx(lang, 'notesHint')} onChange={e => handleEditChange(p.pressNumber, 'notes', e.target.value)} /></div>
+                  </>) : (
+                    <div className="field"><label className="field-label">{tx(lang, 'reason')}</label>
+                      <select value={p.notRunningReason || ''} onChange={e => handleEditChange(p.pressNumber, 'notRunningReason', e.target.value)}>
+                        <option value="">{tx(lang, 'selectReason')}</option>
+                        {['No Operator','Press Breakdown','Scheduled to Not Run','Mold Change / Tooling Change','Material Shortage','Waiting on Maintenance','Other'].map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
         <div className="bottom-bar">
@@ -286,7 +289,6 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
         </div>
         {localData.map(p => {
           const hit = p.isRunning ? calcHit(p.good, p.goal) : null;
-          const isEd = editingPress === p.pressNumber || editingPress === String(p.pressNumber);
           let cls = 'card press-card ' + (p.isRunning ? (p.hasIssue ? 'is-running has-issue' : 'is-running') : 'is-stopped');
           return (
             <div key={p.pressNumber} className={cls}>
@@ -296,11 +298,6 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
               </div>
               <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>{p.operatorName ? `${p.operatorName} — #${p.operatorStamp}` : '—'}</div>
               {p.partNumber && <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Part: {p.partNumber}</div>}
-              <div style={{ fontSize: 12, color: '#aaa', marginTop: 3 }}>
-                {tx(lang, 'moldNo')}: {p.moldNumber || '—'}
-                <button onClick={() => { setEditingPress(p.pressNumber); setMoldInput(p.moldNumber || ''); }} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#C8102E', fontSize: 11, cursor: 'pointer', fontWeight: 'bold' }}>{tx(lang, 'editMold')}</button>
-              </div>
-              {isEd && <div className="mold-edit-row"><input className="mold-edit-input" type="text" value={moldInput} placeholder="e.g. M-452-A" onChange={e => setMoldInput(e.target.value)} /><button className="btn-sm btn-sm-gray" onClick={() => saveMold(false)}>{tx(lang, 'saveQuiet')}</button><button className="btn-sm btn-sm-green" onClick={() => saveMold(true)}>{tx(lang, 'saveAndResend')}</button></div>}
               {p.isRunning ? (
                 <div className="three-col" style={{ marginTop: 8, marginBottom: 4 }}>
                   {[[tx(lang, 'good'), p.good || 0], [tx(lang, 'scrap'), p.scrap || 0], [tx(lang, 'hitPct'), hit !== null ? hit + '%' : '—']].map(([label, val], i) => (
