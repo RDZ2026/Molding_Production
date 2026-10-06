@@ -4,7 +4,7 @@ import { Switch, PartSearch } from './Common';
 import { tx } from '../translations';
 
 export function PressCard({ data, operators, parts, lang, onChange }) {
-  const { pressNumber, operatorId, good, scrap, goal, notes, hasIssue, isRunning, notRunningReason, moldNumber, partId, partNumber, fromPrediction } = data;
+  const { pressNumber, operatorId, good, scrap, goal, notes, hasIssue, isRunning, notRunningReason, partId, partNumber, fromPrediction } = data;
   const reasons = NR_REASONS[lang] || NR_REASONS.en;
   const hit = isRunning ? calcHit(good, goal) : null;
   const upd = (f, v) => onChange(pressNumber, f, v);
@@ -49,11 +49,6 @@ export function PressCard({ data, operators, parts, lang, onChange }) {
           <option value="">{tx(lang, 'selectOp')}</option>
           {operators.map(op => <option key={op.id} value={op.id}>{op.name} — #{op.stampNumber}</option>)}
         </select>
-      </div>
-
-      <div className="field">
-        <label className="field-label">{tx(lang, 'moldNo')} <span style={{ color: '#ccc', fontWeight: 'normal', textTransform: 'none', fontSize: 10 }}>({tx(lang, 'moldOptional')})</span></label>
-        <input type="text" value={moldNumber} placeholder="e.g. M-452-A" onChange={e => upd('moldNumber', e.target.value)} />
       </div>
 
       {parts.length > 0 && (
