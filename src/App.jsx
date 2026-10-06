@@ -6,6 +6,7 @@ import { LanguageScreen, LoginScreen } from './components/Auth';
 import { LeadView } from './components/LeadViews';
 import { ManagerView } from './components/ManagerView';
 import { ViewerView } from './components/ViewerView';
+import { OperatorSubmit } from './components/OperatorSubmit';
 
 export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('moldingLang') || null);
@@ -60,6 +61,21 @@ export default function App() {
     // Viewer only needs basic data
     if (result.user.role === ROLES.VIEWER) {
       setScreen('viewer');
+      return;
+    }
+
+    // Operator only needs operators list and parts — no goals/reports/settings
+    if (result.user.role === 'operator') {
+      setAppLoading(true);
+      const shift = result.user.shift || 2;
+      const [opR, prR] = await Promise.allSettled([
+        gasCall('getOperators', { shift }),
+        gasCall('getParts'),
+      ]);
+      if (opR.status === 'fulfilled' && opR.value?.success) setOperators(opR.value.operators);
+      if (prR.status === 'fulfilled' && prR.value?.success) setParts(prR.value.parts);
+      setAppLoading(false);
+      setScreen('operator');
       return;
     }
 
@@ -127,6 +143,10 @@ export default function App() {
       )}
       {screen === 'viewer' && user && (
         <ViewerView lang={lang} user={user} onLogout={handleLogout} />
+      )}
+      {screen === 'operator' && user && (
+        <OperatorSubmit lang={lang} user={user} operators={operators} parts={parts}
+          shift={user.shift || 2} onLogout={handleLogout} />
       )}
     </div>
   );
