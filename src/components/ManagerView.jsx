@@ -314,6 +314,114 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
   );
 }
 
+// ── Approvals Tab ─────────────────────────────────────────────
+function ApprovalsTab({ lang, user, parts, shiftParam }) {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [editId, setEditId]           = useState(null);
+  const [editData, setEditData]       = useState({});
+  const [saving, setSaving]           = useState(false);
+  const [msg, setMsg]                 = useState('');
+
+  useEffect(() => {
+    gasCall('getPendingApprovals', shiftParam || {})
+      .then(r => { if (r.success) setSubmissions(r.submissions || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const approve = async id => {
+    setSaving(true); setMsg('');
+    const r = await gasCall('approveSubmission', { submissionId: id, approvedBy: user.username });
+    if (r.success) setSubmissions(prev => prev.filter(s => s.id !== id));
+    else setMsg(r.error || 'Error approving.');
+    setSaving(false);
+  };
+
+  const startEdit = sub => {
+    setEditId(sub.id);
+    setEditData({ good: String(sub.good || 0), scrap: String(sub.scrap || 0), partId: sub.partId || '', partNumber: sub.partNumber || '', notes: sub.notes || '', hasIssue: !!sub.hasIssue });
+  };
+
+  const saveAndApprove = async id => {
+    setSaving(true); setMsg('');
+    const r = await gasCall('editAndApproveSubmission', { submissionId: id, updates: editData, approvedBy: user.username });
+    if (r.success) { setSubmissions(prev => prev.filter(s => s.id !== id)); setEditId(null); }
+    else setMsg(r.error || 'Error saving.');
+    setSaving(false);
+  };
+
+  if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
+  if (!submissions.length) return <div className="empty-msg" style={{ padding: 40 }}>No pending submissions. All caught up ✓</div>;
+
+  return (
+    <>
+      {msg && <div className="alert alert-error">{msg}</div>}
+      <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>{submissions.length} pending review</div>
+      {submissions.map(s => {
+        const isEditing = editId === s.id;
+        const selPart   = (parts && editData.partId) ? parts.find(p => p.id === editData.partId) || null : null;
+        const g         = parseInt(s.good,  10) || 0;
+        const sc        = parseInt(s.scrap, 10) || 0;
+        const total     = g + sc;
+        const hit       = total > 0 ? Math.round((g / total) * 100) : null;
+        return (
+          <div key={s.id} className="card" style={{ marginBottom: 11, borderLeft: `4px solid ${isEditing ? '#f59e0b' : '#C8102E'}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: 16 }}>Press {s.pressNumber} — {s.operatorName}</div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{s.operatorStamp} · {formatDateTime(s.submittedAt)}</div>
+              </div>
+              <span style={{ fontSize: 11, background: '#fff3cd', color: '#856404', padding: '3px 8px', borderRadius: 12, fontWeight: 'bold', flexShrink: 0 }}>Pending</span>
+            </div>
+
+            {!isEditing ? (
+              <>
+                {s.partNumber && <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>Part: <strong>{s.partNumber}</strong></div>}
+                <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Good</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#1e7e34' }}>{g}</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Scrap</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#C8102E' }}>{sc}</div></div>
+                  {hit !== null && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Hit%</div><div style={{ fontSize: 26, fontWeight: 'bold', color: hitColor(hit) }}>{hit}%</div></div>}
+                </div>
+                {s.hasIssue && <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 'bold', marginBottom: 6 }}>⚠ Issue reported</div>}
+                {s.notes && <div style={{ fontSize: 13, fontStyle: 'italic', color: '#555', padding: '6px 10px', background: '#f8f8f8', borderRadius: 6, marginBottom: 8 }}>"{s.notes}"</div>}
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <button className="btn btn-red" style={{ flex: 1 }} onClick={() => approve(s.id)} disabled={saving}>✓ Approve</button>
+                  <button className="btn-sm btn-sm-amber" style={{ flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8 }} onClick={() => startEdit(s)}>✏ Edit & Approve</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {parts && parts.length > 0 && (
+                  <div className="field">
+                    <label className="field-label">Part</label>
+                    <PartSearch parts={parts} selectedPart={selPart} onSelect={pt => setEditData(d => ({ ...d, partId: pt ? pt.id : '', partNumber: pt ? pt.partNumber : '' }))} placeholder="Search part..." />
+                  </div>
+                )}
+                <div className="three-col" style={{ marginBottom: 8 }}>
+                  <div><div className="col-label">Good</div><input type="text" inputMode="numeric" value={editData.good} placeholder="0" onChange={e => setEditData(d => ({ ...d, good: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
+                  <div><div className="col-label">Scrap</div><input type="text" inputMode="numeric" value={editData.scrap} placeholder="0" onChange={e => setEditData(d => ({ ...d, scrap: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
+                </div>
+                <div className="toggle-row" style={{ marginBottom: 8 }}>
+                  <span className="toggle-text">⚠ Had an issue</span>
+                  <label className="sw" htmlFor={`app-iss-${s.id}`}><input id={`app-iss-${s.id}`} type="checkbox" checked={!!editData.hasIssue} onChange={e => setEditData(d => ({ ...d, hasIssue: e.target.checked }))} /><span className="sw-track"></span></label>
+                </div>
+                <div className="field">
+                  <label className="field-label">Notes</label>
+                  <textarea value={editData.notes || ''} placeholder="Add or edit notes..." onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))} />
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-red" style={{ flex: 1 }} onClick={() => saveAndApprove(s.id)} disabled={saving}>{saving ? '...' : '✓ Save & Approve'}</button>
+                  <button className="btn-sm btn-sm-gray" style={{ padding: '10px 16px', borderRadius: 8 }} onClick={() => setEditId(null)}>Cancel</button>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 // ── Overview Tab ──────────────────────────────────────────────
 function OverviewTab({ lang, operators, shiftParam, isAdmin, userShift }) {
   const [period, setPeriod] = useState('week');
@@ -442,14 +550,15 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
   if (selReport) return <ReportDetail report={selReport} lang={lang} onBack={() => setSelReport(null)} onArchive={handleArchive} operators={operators} parts={parts} />;
   if (selPred) return <EHPredictionDetail prediction={selPred} parts={parts} lang={lang} ehGoal={settings.ehGoal || 47.5} onBack={() => setSelPred(null)} onDelete={handleDeletePred} />;
 
-  const adminTabs = ['overview', 'molders', 'rotation', 'submit', 'weekly', 'users', 'operators', 'goals', 'parts', 'eh', 'ehsummary', 'reports'];
-  const managerTabs = ['overview', 'molders', 'rotation', 'submit', 'weekly', 'eh', 'ehsummary', 'reports'];
+  const adminTabs   = ['overview', 'approvals', 'molders', 'rotation', 'submit', 'weekly', 'users', 'operators', 'goals', 'parts', 'eh', 'ehsummary', 'reports'];
+  const managerTabs = ['overview', 'approvals', 'molders', 'rotation', 'submit', 'weekly', 'eh', 'ehsummary', 'reports'];
   const tabs = isAdmin ? adminTabs : managerTabs;
 
   const renderContent = () => {
     if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
-    if (tab === 'overview') return <OverviewTab lang={lang} operators={operators} shiftParam={shiftParam} isAdmin={isAdmin} userShift={filterShift} />;
-    if (tab === 'molders')  return <MolderProfilesTab lang={lang} operators={operators} user={user} shiftParam={shiftParam} />;
+    if (tab === 'overview')   return <OverviewTab lang={lang} operators={operators} shiftParam={shiftParam} isAdmin={isAdmin} userShift={filterShift} />;
+    if (tab === 'approvals')  return <ApprovalsTab lang={lang} user={user} parts={parts} shiftParam={shiftParam} />;
+    if (tab === 'molders')    return <MolderProfilesTab lang={lang} operators={operators} user={user} shiftParam={shiftParam} />;
     if (tab === 'rotation') return <RotationView user={user} />;
     if (tab === 'ehsummary') return <EHSummaryTab lang={lang} shiftParam={shiftParam} />;
     if (tab === 'weekly')     return <WeeklySummaryTab lang={lang} user={user} shiftParam={shiftParam} />;
@@ -494,9 +603,9 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
         <div><div className="header-title">nVent | {tx(lang, 'manager')}</div><div className="header-sub">{user.name ? user.name + ' (' + user.username + ')' : user.username}{user.shift && user.role !== 'admin' ? ' · ' + (user.shift === 1 ? '1st Shift' : '2nd Shift') : ''}</div></div>
         <button className="header-btn" onClick={onLogout}>{tx(lang, 'logout')}</button>
       </div>
-      {!isDesktop && <div className="tabs">{tabs.map(tk => <div key={tk} className={`tab${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : tk === 'rotation' ? 'Rotation' : (tx(lang, tk) || tk)}</div>)}</div>}
+      {!isDesktop && <div className="tabs">{tabs.map(tk => <div key={tk} className={`tab${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : tk === 'rotation' ? 'Rotation' : tk === 'approvals' ? 'Approvals' : (tx(lang, tk) || tk)}</div>)}</div>}
       <div className="mgr-body">
-        {isDesktop && <div className="mgr-sidebar">{tabs.map(tk => <button key={tk} className={`mgr-sidebar-btn${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : tk === 'rotation' ? 'Rotation' : (tx(lang, tk) || tk)}</button>)}</div>}
+        {isDesktop && <div className="mgr-sidebar">{tabs.map(tk => <button key={tk} className={`mgr-sidebar-btn${tab === tk ? ' active' : ''}`} onClick={() => setTab(tk)}>{tk === 'weekly' ? 'Weekly' : tk === 'rotation' ? 'Rotation' : tk === 'approvals' ? 'Approvals' : (tx(lang, tk) || tk)}</button>)}</div>}
         <div className="mgr-content">{renderContent()}</div>
       </div>
       {modal?.type === 'user'     && <UserModal lang={lang} item={modal.item} onSave={() => { setModal(null); loadUsers(); }} onClose={() => setModal(null)} />}
