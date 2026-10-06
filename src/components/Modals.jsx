@@ -29,10 +29,11 @@ export function UserModal({ lang, item, onSave, onClose }) {
   };
 
   const roleOptions = [
-    { value: 'lead',    label: 'Lead' },
-    { value: 'manager', label: 'Manager' },
-    { value: 'admin',   label: 'Admin' },
-    { value: 'viewer',  label: 'Viewer (Read Only)' },
+    { value: 'lead',     label: 'Lead' },
+    { value: 'manager',  label: 'Manager' },
+    { value: 'admin',    label: 'Admin' },
+    { value: 'viewer',   label: 'Viewer (Read Only)' },
+    { value: 'operator', label: 'Operator' },
   ];
 
   return (
@@ -49,7 +50,7 @@ export function UserModal({ lang, item, onSave, onClose }) {
             {roleOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
-        {(role === 'lead' || role === 'manager') && (
+        {(role === 'lead' || role === 'manager' || role === 'operator') && (
           <div className="field">
             <label className="field-label">Shift</label>
             <select value={shift} onChange={e => setShift(parseInt(e.target.value))}>
@@ -151,7 +152,7 @@ export function AddNoteModal({ lang, operatorName, author, onSave, onClose }) {
         <div className="field"><label className="field-label">{tx(lang, 'notePlaceholder')}</label><textarea value={note} placeholder={tx(lang, 'notePlaceholder')} onChange={e => setNote(e.target.value)} style={{ minHeight: 120 }} autoFocus /></div>
         <div className="modal-footer">
           <button className="btn btn-gray" style={{ flex: 1 }} onClick={onClose}>{tx(lang, 'cancel')}</button>
-          <button className="btn btn-red" style={{ flex: 1 }} onClick={save} disabled={saving || !note.trim()}>{saving ? tx(lang, 'saving') : tx(lang, 'saveNote')}</button>
+          <button className="btn btn-red" style={{ flex: 1 }} onClick={save} disabled={saving || !note.trim()}>{saving ? tx(lang, 'saving') : tx(lang, 'save')}</button>
         </div>
       </div>
     </div>
