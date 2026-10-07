@@ -83,17 +83,16 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
+  const emptyEntry = () => ({ part: null, partSearch: '', good: '', scrap: '' });
 
+  // pressNumbers and entries are parallel arrays — entries[i] belongs to pressNumbers[i]
   const [reportDate, setReportDate] = useState(todayStr);
   const [pressNumbers, setPressNumbers] = useState([]);
-  const [partSearch, setPartSearch] = useState('');
-  const [selectedPart, setSelectedPart] = useState(null);
-  const [good, setGood] = useState('');
-  const [scrap, setScrap] = useState('');
+  const [entries, setEntries] = useState([]);
   const [hasIssue, setHasIssue] = useState(false);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
-  const [submitted, setSubmitted] = useState(null);
+  const [submitted, setSubmitted] = useState([]); // one per press row
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState(false);
@@ -106,55 +105,77 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
     ]).then(([subR, prR]) => {
       if (subR.status === 'fulfilled' && subR.value?.success && subR.value.submission) {
         const s = subR.value.submission;
-        setSubmitted(s);
-        if (s.pressNumber) {
-          const pn = String(s.pressNumber);
-          setPressNumbers(pn.split(',').map(p => p.trim()).filter(Boolean));
-        }
-        setGood(String(s.good ?? ''));
-        setScrap(String(s.scrap ?? ''));
+        const pns = s.pressNumber
+          ? String(s.pressNumber).split(',').map(p => p.trim()).filter(Boolean)
+          : [];
+        setPressNumbers(pns);
+        setEntries(pns.map(() => ({
+          part: s.partId ? { id: s.partId, partNumber: s.partNumber, description: '' } : null,
+          partSearch: '',
+          good: String(s.good ?? ''),
+          scrap: String(s.scrap ?? ''),
+        })));
+        setSubmitted([s]);
         setHasIssue(!!s.hasIssue);
         setNotes(s.notes || '');
         if (s.reportDate) setReportDate(s.reportDate);
-        if (s.partId) setSelectedPart({ id: s.partId, partNumber: s.partNumber, description: '' });
       }
-      if (prR.status === 'fulfilled' && prR.value?.success) {
-        setInternalParts(prR.value.parts);
-      }
+      if (prR.status === 'fulfilled' && prR.value?.success) setInternalParts(prR.value.parts);
       setLoading(false);
     });
   }, []);
 
-  const filteredParts = partSearch.length < 2 ? [] : internalParts.filter(p =>
-    p.partNumber.toLowerCase().includes(partSearch.toLowerCase()) ||
-    (p.description || '').toLowerCase().includes(partSearch.toLowerCase())
-  );
+  // Toggle a press chip — keeps entries in sync
+  const togglePress = (ns) => {
+    const idx = pressNumbers.indexOf(ns);
+    if (idx >= 0) {
+      setPressNumbers(prev => prev.filter((_, i) => i !== idx));
+      setEntries(prev => prev.filter((_, i) => i !== idx));
+      setSubmitted(prev => prev.filter((_, i) => i !== idx));
+    } else if (pressNumbers.length < 2) {
+      setPressNumbers(prev => [...prev, ns]);
+      setEntries(prev => [...prev, emptyEntry()]);
+    }
+  };
+
+  // Update one field in one entry
+  const updateEntry = (idx, updates) =>
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, ...updates } : e));
+
+  const canSubmit = pressNumbers.length > 0 &&
+    entries.length === pressNumbers.length &&
+    entries.every(e => e.part && e.good !== '');
 
   const handleSubmit = async () => {
-    if (!pressNumber || !selectedPart || good === '') return;
+    if (!canSubmit) return;
     setSaving(true); setErr('');
     try {
-      const pl = {
-        operatorId: user.id,
-        operatorName: user.name,
+      const base = {
+        operatorId: user.id, operatorName: user.name,
         operatorStamp: user.stampNumber || '',
         shift: user.shift || shift,
-        reportDate,
-        pressNumber: pressNumbers.join(', '),
-        partId: selectedPart.id,
-        partNumber: selectedPart.partNumber,
-        good: parseInt(good) || 0,
-        scrap: parseInt(scrap) || 0,
-        hasIssue,
-        notes: notes.trim(),
+        reportDate, hasIssue, notes: notes.trim(),
       };
-      if (submitted) pl.id = submitted.id;
-      const r = await gasCall(submitted ? 'updateOperatorSubmission' : 'submitOperatorReport', pl);
-      if (r.success) {
+      const results = await Promise.all(
+        pressNumbers.map((pn, i) => {
+          const e = entries[i];
+          const pl = {
+            ...base,
+            pressNumber: pn,
+            partId: e.part.id, partNumber: e.part.partNumber,
+            good: parseInt(e.good) || 0, scrap: parseInt(e.scrap) || 0,
+          };
+          const existing = submitted[i];
+          if (existing?.id) pl.id = existing.id;
+          return gasCall(existing?.id ? 'updateOperatorSubmission' : 'submitOperatorReport', pl);
+        })
+      );
+      const failed = results.find(r => !r.success);
+      if (!failed) {
         setSuccess(true);
-        setSubmitted({ ...pl, id: r.id || submitted?.id, status: 'pending' });
+        setSubmitted(results.map((r, i) => ({ id: r.id || submitted[i]?.id, status: 'pending' })));
       } else {
-        setErr(r.error || t.errSave);
+        setErr(failed.error || t.errSave);
       }
     } catch {
       setErr(t.errNet);
@@ -171,12 +192,13 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
     </div>
   );
 
-  const canSubmit = pressNumbers.length > 0 && selectedPart && good !== '';
   const lbl = { display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: '#666', marginBottom: 6 };
   const inp = { width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' };
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 48px', fontFamily: 'system-ui, sans-serif' }}>
+
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: 18 }}>{user.name || user.username}</div>
@@ -188,7 +210,7 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
       <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 20 }}>{t.title}</div>
 
       {success && <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#166534', fontWeight: 600 }}>{t.successMsg}</div>}
-      {submitted && !success && <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#9a3412', fontSize: 13 }}>{t.alreadyMsg(submitted.status || 'pending')}</div>}
+      {submitted.length > 0 && !success && <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#9a3412', fontSize: 13 }}>{t.alreadyMsg(submitted[0].status || 'pending')}</div>}
       {err && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#991b1b' }}>{err}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -196,15 +218,10 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
         {/* Report Date */}
         <div>
           <label style={lbl}>{t.dateLabel}</label>
-          <input
-            type="date"
-            value={reportDate}
-            onChange={e => setReportDate(e.target.value)}
-            style={inp}
-          />
+          <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} style={inp} />
         </div>
 
-        {/* Press Number — tap chips, max 2 */}
+        {/* Press chips — tap to select, max 2 */}
         <div>
           <label style={lbl}>
             {t.pressLabel}
@@ -216,26 +233,8 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
               const selected = pressNumbers.includes(ns);
               const maxed = !selected && pressNumbers.length >= 2;
               return (
-                <button
-                  key={n}
-                  type="button"
-                  disabled={maxed}
-                  onClick={() => {
-                    if (selected) setPressNumbers(pressNumbers.filter(p => p !== ns));
-                    else if (pressNumbers.length < 2) setPressNumbers([...pressNumbers, ns]);
-                  }}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: 8,
-                    border: selected ? '2px solid #C8102E' : '1px solid #ddd',
-                    background: selected ? '#fff0f0' : maxed ? '#f9f9f9' : 'white',
-                    color: selected ? '#C8102E' : maxed ? '#ccc' : '#111',
-                    fontWeight: 700,
-                    fontSize: 15,
-                    cursor: maxed ? 'default' : 'pointer',
-                    minWidth: 54,
-                  }}
-                >
+                <button key={n} type="button" disabled={maxed} onClick={() => togglePress(ns)}
+                  style={{ padding: '9px 16px', borderRadius: 8, border: selected ? '2px solid #C8102E' : '1px solid #ddd', background: selected ? '#fff0f0' : maxed ? '#f9f9f9' : 'white', color: selected ? '#C8102E' : maxed ? '#ccc' : '#111', fontWeight: 700, fontSize: 15, cursor: maxed ? 'default' : 'pointer', minWidth: 54 }}>
                   {n}
                 </button>
               );
@@ -248,46 +247,69 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
           )}
         </div>
 
-        {/* Part Number */}
-        <div>
-          <label style={lbl}>{t.partLabel}</label>
-          {selectedPart ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', border: '1.5px solid #C8102E', borderRadius: 8, background: '#fff5f5' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{selectedPart.partNumber}</div>
-                {selectedPart.description && <div style={{ color: '#888', fontSize: 12 }}>{selectedPart.description}</div>}
+        {/* Per-press entry cards */}
+        {pressNumbers.map((pn, i) => {
+          const entry = entries[i] || emptyEntry();
+          const filtered = entry.partSearch.length < 2 ? [] : internalParts.filter(p =>
+            p.partNumber.toLowerCase().includes(entry.partSearch.toLowerCase()) ||
+            (p.description || '').toLowerCase().includes(entry.partSearch.toLowerCase())
+          );
+          return (
+            <div key={pn} style={{ border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#C8102E', paddingBottom: 8, borderBottom: '1px solid #f3f4f6', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                Press {pn}
               </div>
-              <button onClick={() => { setSelectedPart(null); setPartSearch(''); }} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 22, cursor: 'pointer', padding: 0 }}>×</button>
-            </div>
-          ) : (
-            <div style={{ position: 'relative' }}>
-              <input type="text" value={partSearch} onChange={e => setPartSearch(e.target.value)} placeholder={t.partPlaceholder} autoCapitalize="none" style={inp} />
-              {filteredParts.length > 0 && (
-                <div style={{ position: 'absolute', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 8px 8px', maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                  {filteredParts.map(p => (
-                    <div key={p.id} onClick={() => { setSelectedPart(p); setPartSearch(''); }} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{p.partNumber}</div>
-                      {p.description && <div style={{ color: '#888', fontSize: 12 }}>{p.description}</div>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {partSearch.length >= 2 && filteredParts.length === 0 && <div style={{ marginTop: 6, color: '#aaa', fontSize: 13 }}>{t.noPartsMsg}</div>}
-            </div>
-          )}
-        </div>
 
-        {/* Good / Scrap */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <label style={lbl}>{t.goodLabel}</label>
-            <input type="number" inputMode="numeric" value={good} onChange={e => setGood(e.target.value)} placeholder="0" style={{ ...inp, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }} />
-          </div>
-          <div>
-            <label style={lbl}>{t.scrapLabel}</label>
-            <input type="number" inputMode="numeric" value={scrap} onChange={e => setScrap(e.target.value)} placeholder="0" style={{ ...inp, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }} />
-          </div>
-        </div>
+              {/* Part Number */}
+              <div>
+                <label style={lbl}>{t.partLabel}</label>
+                {entry.part ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', border: '1.5px solid #C8102E', borderRadius: 8, background: '#fff5f5' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{entry.part.partNumber}</div>
+                      {entry.part.description && <div style={{ color: '#888', fontSize: 12 }}>{entry.part.description}</div>}
+                    </div>
+                    <button onClick={() => updateEntry(i, { part: null, partSearch: '' })} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 22, cursor: 'pointer', padding: 0 }}>×</button>
+                  </div>
+                ) : (
+                  <div style={{ position: 'relative' }}>
+                    <input type="text" value={entry.partSearch}
+                      onChange={e => updateEntry(i, { partSearch: e.target.value })}
+                      placeholder={t.partPlaceholder} autoCapitalize="none" style={inp} />
+                    {filtered.length > 0 && (
+                      <div style={{ position: 'absolute', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 8px 8px', maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        {filtered.map(p => (
+                          <div key={p.id} onClick={() => updateEntry(i, { part: p, partSearch: '' })}
+                            style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6' }}>
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>{p.partNumber}</div>
+                            {p.description && <div style={{ color: '#888', fontSize: 12 }}>{p.description}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {entry.partSearch.length >= 2 && filtered.length === 0 && <div style={{ marginTop: 6, color: '#aaa', fontSize: 13 }}>{t.noPartsMsg}</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Good / Scrap */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={lbl}>{t.goodLabel}</label>
+                  <input type="number" inputMode="numeric" value={entry.good}
+                    onChange={e => updateEntry(i, { good: e.target.value })}
+                    placeholder="0" style={{ ...inp, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }} />
+                </div>
+                <div>
+                  <label style={lbl}>{t.scrapLabel}</label>
+                  <input type="number" inputMode="numeric" value={entry.scrap}
+                    onChange={e => updateEntry(i, { scrap: e.target.value })}
+                    placeholder="0" style={{ ...inp, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
 
         {/* Issue toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer' }} onClick={() => setHasIssue(!hasIssue)}>
@@ -303,11 +325,14 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
         {/* Notes */}
         <div>
           <label style={lbl}>{t.notesLabel} {!hasIssue && <span style={{ color: '#ccc', fontWeight: 400, textTransform: 'none', marginLeft: 6, fontSize: 11 }}>{t.notesOptional}</span>}</label>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={hasIssue ? t.issuePlaceholder : t.notesPlaceholder} style={{ ...inp, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
+          <textarea value={notes} onChange={e => setNotes(e.target.value)}
+            placeholder={hasIssue ? t.issuePlaceholder : t.notesPlaceholder}
+            style={{ ...inp, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} />
         </div>
 
-        <button onClick={handleSubmit} disabled={saving || !canSubmit} style={{ width: '100%', padding: 16, background: canSubmit ? '#C8102E' : '#e5e7eb', color: canSubmit ? 'white' : '#9ca3af', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: canSubmit ? 'pointer' : 'default' }}>
-          {saving ? t.submitting : submitted ? t.updateBtn : t.submitBtn}
+        <button onClick={handleSubmit} disabled={saving || !canSubmit}
+          style={{ width: '100%', padding: 16, background: canSubmit ? '#C8102E' : '#e5e7eb', color: canSubmit ? 'white' : '#9ca3af', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: canSubmit ? 'pointer' : 'default' }}>
+          {saving ? t.submitting : submitted.length > 0 ? t.updateBtn : t.submitBtn}
         </button>
       </div>
       <div style={{ marginTop: 32, textAlign: 'center', color: '#ddd', fontSize: 11 }}>{t.footer(user.shift || shift)}</div>
