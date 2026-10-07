@@ -20,6 +20,8 @@ const OT = {
     successMsg: 'Report submitted. Your supervisor will review it.',
     alreadyMsg: (status) => `Already submitted for this date (status: ${status}). You can update below.`,
     pressLabel: 'Press #',
+    pressHint: 'tap to select · up to 2',
+    pressTwoSelected: (p) => `Running: ${p}`,
     pressPlaceholder: 'Select press...',
     dateLabel: 'Report Date',
     partLabel: 'Part Number',
@@ -49,6 +51,8 @@ const OT = {
     successMsg: 'Reporte enviado. Su supervisor lo revisará.',
     alreadyMsg: (status) => `Ya enviaste un reporte para esta fecha (estado: ${status}). Puedes actualizarlo abajo.`,
     pressLabel: 'Prensa #',
+    pressHint: 'toca para seleccionar · hasta 2',
+    pressTwoSelected: (p) => `Operando: ${p}`,
     pressPlaceholder: 'Selecciona prensa...',
     dateLabel: 'Fecha del Reporte',
     partLabel: 'Número de Parte',
@@ -81,7 +85,7 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
   };
 
   const [reportDate, setReportDate] = useState(todayStr);
-  const [pressNumber, setPressNumber] = useState('');
+  const [pressNumbers, setPressNumbers] = useState([]);
   const [partSearch, setPartSearch] = useState('');
   const [selectedPart, setSelectedPart] = useState(null);
   const [good, setGood] = useState('');
@@ -103,7 +107,10 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
       if (subR.status === 'fulfilled' && subR.value?.success && subR.value.submission) {
         const s = subR.value.submission;
         setSubmitted(s);
-        setPressNumber(String(s.pressNumber || ''));
+        if (s.pressNumber) {
+          const pn = String(s.pressNumber);
+          setPressNumbers(pn.split(',').map(p => p.trim()).filter(Boolean));
+        }
         setGood(String(s.good ?? ''));
         setScrap(String(s.scrap ?? ''));
         setHasIssue(!!s.hasIssue);
@@ -133,7 +140,7 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
         operatorStamp: user.stampNumber || '',
         shift: user.shift || shift,
         reportDate,
-        pressNumber: parseInt(pressNumber),
+        pressNumber: pressNumbers.join(', '),
         partId: selectedPart.id,
         partNumber: selectedPart.partNumber,
         good: parseInt(good) || 0,
@@ -164,7 +171,7 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
     </div>
   );
 
-  const canSubmit = pressNumber && selectedPart && good !== '';
+  const canSubmit = pressNumbers.length > 0 && selectedPart && good !== '';
   const lbl = { display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: '#666', marginBottom: 6 };
   const inp = { width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' };
 
@@ -197,13 +204,48 @@ function OperatorScreen({ lang, user, shift, onLogout }) {
           />
         </div>
 
-        {/* Press Number */}
+        {/* Press Number — tap chips, max 2 */}
         <div>
-          <label style={lbl}>{t.pressLabel}</label>
-          <select value={pressNumber} onChange={e => setPressNumber(e.target.value)} style={inp}>
-            <option value="">{t.pressPlaceholder}</option>
-            {PRESS_NUMBERS.map(n => <option key={n} value={n}>Press {n}</option>)}
-          </select>
+          <label style={lbl}>
+            {t.pressLabel}
+            <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 11, color: '#aaa', marginLeft: 6 }}>{t.pressHint}</span>
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+            {PRESS_NUMBERS.map(n => {
+              const ns = String(n);
+              const selected = pressNumbers.includes(ns);
+              const maxed = !selected && pressNumbers.length >= 2;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  disabled={maxed}
+                  onClick={() => {
+                    if (selected) setPressNumbers(pressNumbers.filter(p => p !== ns));
+                    else if (pressNumbers.length < 2) setPressNumbers([...pressNumbers, ns]);
+                  }}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: 8,
+                    border: selected ? '2px solid #C8102E' : '1px solid #ddd',
+                    background: selected ? '#fff0f0' : maxed ? '#f9f9f9' : 'white',
+                    color: selected ? '#C8102E' : maxed ? '#ccc' : '#111',
+                    fontWeight: 700,
+                    fontSize: 15,
+                    cursor: maxed ? 'default' : 'pointer',
+                    minWidth: 54,
+                  }}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+          {pressNumbers.length === 2 && (
+            <div style={{ fontSize: 12, color: '#C8102E', fontWeight: 600, marginTop: 6 }}>
+              {t.pressTwoSelected(pressNumbers.join(' + '))}
+            </div>
+          )}
         </div>
 
         {/* Part Number */}
