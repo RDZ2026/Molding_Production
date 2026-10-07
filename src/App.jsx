@@ -73,7 +73,7 @@ const OT = {
 };
 
 // ── Operator Submit Screen (inline — no separate file needed) ─────────────────
-function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
+function OperatorScreen({ lang, user, shift, onLogout }) {
   const t = OT[lang === 'es' ? 'es' : 'en'];
   const todayStr = () => {
     const d = new Date();
@@ -93,27 +93,32 @@ function OperatorScreen({ lang, user, operators, parts, shift, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState(false);
+  const [internalParts, setInternalParts] = useState([]);
 
   useEffect(() => {
-    gasCall('getOperatorSubmission', { operatorName: user.name, shift: user.shift || shift })
-      .then(r => {
-        if (r.success && r.submission) {
-          const s = r.submission;
-          setSubmitted(s);
-          setPressNumber(String(s.pressNumber || ''));
-          setGood(String(s.good ?? ''));
-          setScrap(String(s.scrap ?? ''));
-          setHasIssue(!!s.hasIssue);
-          setNotes(s.notes || '');
-          if (s.reportDate) setReportDate(s.reportDate);
-          if (s.partId) setSelectedPart({ id: s.partId, partNumber: s.partNumber, description: '' });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.allSettled([
+      gasCall('getOperatorSubmission', { operatorName: user.name, shift: user.shift || shift }),
+      gasCall('getParts'),
+    ]).then(([subR, prR]) => {
+      if (subR.status === 'fulfilled' && subR.value?.success && subR.value.submission) {
+        const s = subR.value.submission;
+        setSubmitted(s);
+        setPressNumber(String(s.pressNumber || ''));
+        setGood(String(s.good ?? ''));
+        setScrap(String(s.scrap ?? ''));
+        setHasIssue(!!s.hasIssue);
+        setNotes(s.notes || '');
+        if (s.reportDate) setReportDate(s.reportDate);
+        if (s.partId) setSelectedPart({ id: s.partId, partNumber: s.partNumber, description: '' });
+      }
+      if (prR.status === 'fulfilled' && prR.value?.success) {
+        setInternalParts(prR.value.parts);
+      }
+      setLoading(false);
+    });
   }, []);
 
-  const filteredParts = partSearch.length < 2 ? [] : parts.filter(p =>
+  const filteredParts = partSearch.length < 2 ? [] : internalParts.filter(p =>
     p.partNumber.toLowerCase().includes(partSearch.toLowerCase()) ||
     (p.description || '').toLowerCase().includes(partSearch.toLowerCase())
   );
@@ -328,17 +333,8 @@ export default function App() {
       return;
     }
 
-    // Operator — only needs parts for their shift
+    // Operator — navigate immediately; OperatorScreen loads its own data
     if (result.user.role === 'operator') {
-      setAppLoading(true);
-      const opShift = result.user.shift || 2;
-      const [opR, prR] = await Promise.allSettled([
-        gasCall('getOperators', { shift: opShift }),
-        gasCall('getParts'),
-      ]);
-      if (opR.status === 'fulfilled' && opR.value?.success) setOperators(opR.value.operators);
-      if (prR.status === 'fulfilled' && prR.value?.success) setParts(prR.value.parts);
-      setAppLoading(false);
       setScreen('operator');
       return;
     }
@@ -408,8 +404,7 @@ export default function App() {
         <ViewerView lang={lang} user={user} onLogout={handleLogout} />
       )}
       {screen === 'operator' && user && (
-        <OperatorScreen lang={lang} user={user} operators={operators} parts={parts}
-          shift={user.shift || 2} onLogout={handleLogout} />
+        <OperatorScreen lang={lang} user={user} shift={user.shift || 2} onLogout={handleLogout} />
       )}
     </div>
   );
