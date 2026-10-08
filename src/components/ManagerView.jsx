@@ -314,14 +314,274 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
   );
 }
 
+// ── Night Press Modal ─────────────────────────────────────────
+const PRESS_NUMBERS_NIGHT = [300, 452, 454, 455, 462, 501, 502, 1000, 1200];
+
+function NightPressModal({ parts, initial, date, shift, updatedBy, onSave, onClose }) {
+  const isNew = !initial.pressNumber;
+  const [pressNumber, setPressNumber] = useState(String(initial.pressNumber || ''));
+  const [partId,      setPartId]      = useState(initial.partId      || '');
+  const [partNumber,  setPartNumber]  = useState(initial.partNumber  || '');
+  const [good,        setGood]        = useState(String(initial.good  ?? 0));
+  const [scrap,       setScrap]       = useState(String(initial.scrap ?? 0));
+  const [goal,        setGoal]        = useState(String(initial.goal  ?? 0));
+  const [notes,       setNotes]       = useState(initial.notes || '');
+  const [saving,      setSaving]      = useState(false);
+  const [err,         setErr]         = useState('');
+
+  const selPart = parts && partId ? parts.find(p => p.id === partId) || null : null;
+
+  const save = async () => {
+    if (!pressNumber) return;
+    setSaving(true); setErr('');
+    const entry = {
+      pressNumber:      parseInt(pressNumber, 10) || pressNumber,
+      operatorId:       initial.operatorId    || '',
+      operatorName:     initial.operatorName  || '',
+      operatorStamp:    initial.operatorStamp || '',
+      isRunning:        true,
+      good:             parseInt(good,  10) || 0,
+      scrap:            parseInt(scrap, 10) || 0,
+      goal:             parseInt(goal,  10) || 0,
+      notes,
+      hasIssue:         false,
+      notRunningReason: '',
+      partId,
+      partNumber,
+      partEhRate:       selPart ? selPart.ehRate : (initial.partEhRate || 0)
+    };
+    const r = await gasCall('updateNightReportPress', { date, shift, pressEntry: entry, updatedBy });
+    if (r.success) onSave();
+    else { setErr(r.error || 'Error saving.'); setSaving(false); }
+  };
+
+  return (
+    <div className="modal-bg" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-sheet">
+        <div className="modal-title">
+          {isNew ? 'Add Press to Report' : `Edit Press ${initial.pressNumber}`}
+        </div>
+        {err && <div className="alert alert-error">{err}</div>}
+
+        {isNew && (
+          <div className="field">
+            <label className="field-label">Press</label>
+            <select value={pressNumber} onChange={e => setPressNumber(e.target.value)}>
+              <option value="">Select press...</option>
+              {PRESS_NUMBERS_NIGHT.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        )}
+
+        {parts && parts.length > 0 && (
+          <div className="field">
+            <label className="field-label">Part <span style={{ color:'#ccc', fontWeight:'normal', textTransform:'none', fontSize:10 }}>(optional)</span></label>
+            <PartSearch
+              parts={parts}
+              selectedPart={selPart}
+              onSelect={pt => { setPartId(pt ? pt.id : ''); setPartNumber(pt ? pt.partNumber : ''); }}
+              placeholder="Search part..."
+            />
+          </div>
+        )}
+
+        <div className="three-col" style={{ marginBottom: 8 }}>
+          <div>
+            <div className="col-label">Good</div>
+            <input type="text" inputMode="numeric" value={good}
+              onChange={e => setGood(e.target.value.replace(/[^0-9]/g, ''))} />
+          </div>
+          <div>
+            <div className="col-label">Scrap</div>
+            <input type="text" inputMode="numeric" value={scrap}
+              onChange={e => setScrap(e.target.value.replace(/[^0-9]/g, ''))} />
+          </div>
+          <div>
+            <div className="col-label">Goal</div>
+            <input type="text" inputMode="numeric" value={goal}
+              onChange={e => setGoal(e.target.value.replace(/[^0-9]/g, ''))} />
+          </div>
+        </div>
+
+        <div className="field">
+          <label className="field-label">Notes <span style={{ color:'#ccc', fontWeight:'normal', textTransform:'none', fontSize:10 }}>(optional)</span></label>
+          <textarea value={notes} placeholder="Any notes..." onChange={e => setNotes(e.target.value)} style={{ minHeight: 60 }} />
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-gray" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          <button className="btn btn-red"  style={{ flex: 1 }} onClick={save} disabled={saving || !pressNumber}>
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tonight Panel ─────────────────────────────────────────────
+function TonightPanel({ user, parts, refreshKey, shiftParam }) {
+  const todayDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const shift     = shiftParam?.shift || user?.shift || 2;
+
+  const [report,    setReport]    = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const [editPress, setEditPress] = useState(null);
+  const [copyMsg,   setCopyMsg]   = useState('');
+
+  const load = () => {
+    setLoading(true);
+    gasCall('getNightReport', { date: todayDate, shift })
+      .then(r => { if (r.success) setReport(r.report); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, [refreshKey]);
+
+  const pressData = report?.pressData || [];
+
+  const passdownText = () => {
+    const sorted = [...pressData].sort((a, b) => Number(a.pressNumber) - Number(b.pressNumber));
+    const lines   = ['Molding -', '  (Good / Scrap / Goal)', ''];
+    sorted.forEach(p => {
+      if (p.isRunning === false) {
+        lines.push(`${p.pressNumber} - NOT RUNNING${p.notRunningReason ? ' — ' + p.notRunningReason : ''}`);
+      } else {
+        lines.push(`${p.pressNumber} - ( ${p.good ?? 0} / ${p.scrap ?? 0} / ${p.goal ?? 0} )`);
+      }
+    });
+    return lines.join('\n');
+  };
+
+  const copyPassdown = () => {
+    navigator.clipboard.writeText(passdownText()).catch(() => {});
+    setCopyMsg('Copied!');
+    setTimeout(() => setCopyMsg(''), 2000);
+  };
+
+  const emptyPress = { pressNumber: '', partId: '', partNumber: '', good: 0, scrap: 0, goal: 0, notes: '', isRunning: true, operatorId: '', operatorName: '', operatorStamp: '' };
+
+  return (
+    <div className="card" style={{ marginBottom: 16, borderLeft: '4px solid #C8102E' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: collapsed ? 0 : 10 }}>
+        <div style={{ fontWeight: 'bold', fontSize: 15 }}>
+          Tonight's Report
+          {pressData.length > 0 && (
+            <span style={{ fontWeight: 'normal', fontSize: 12, color: '#888', marginLeft: 8 }}>
+              {pressData.length} press{pressData.length !== 1 ? 'es' : ''} logged
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setCollapsed(v => !v)}
+          style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}
+        >
+          {collapsed ? '▼ Show' : '▲ Hide'}
+        </button>
+      </div>
+
+      {!collapsed && (
+        <>
+          {loading ? (
+            <div style={{ fontSize: 13, color: '#aaa', paddingBottom: 6 }}>Loading...</div>
+          ) : pressData.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#aaa', paddingBottom: 6 }}>
+              No approved submissions yet — presses appear here as you approve them.
+            </div>
+          ) : (
+            <>
+              {/* Press rows */}
+              {[...pressData]
+                .sort((a, b) => Number(a.pressNumber) - Number(b.pressNumber))
+                .map(p => (
+                  <div key={p.pressNumber} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f0f0f0' }}>
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: 14 }}>
+                        Press {p.pressNumber}
+                        {p.operatorName && (
+                          <span style={{ fontWeight: 'normal', color: '#666', fontSize: 13 }}> — {p.operatorName}</span>
+                        )}
+                      </div>
+                      {p.partNumber && <div style={{ fontSize: 12, color: '#888', marginTop: 1 }}>{p.partNumber}</div>}
+                      <div style={{ fontSize: 14, marginTop: 4 }}>
+                        <span style={{ color: '#1e7e34', fontWeight: 'bold' }}>{p.good ?? 0}</span>
+                        <span style={{ color: '#ccc', margin: '0 5px' }}>/</span>
+                        <span style={{ color: '#C8102E', fontWeight: 'bold' }}>{p.scrap ?? 0}</span>
+                        <span style={{ color: '#ccc', margin: '0 5px' }}>/</span>
+                        <span style={{ color: '#555' }}>{p.goal ?? 0}</span>
+                        <span style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>goal</span>
+                      </div>
+                    </div>
+                    <button
+                      className="btn-sm btn-sm-gray"
+                      style={{ flexShrink: 0 }}
+                      onClick={() => setEditPress({ ...p })}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ))
+              }
+
+              {/* Passdown preview */}
+              <pre style={{ background: '#f5f5f5', borderRadius: 6, padding: '10px 12px', fontSize: 12, marginTop: 12, marginBottom: 4, whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#333' }}>
+                {passdownText()}
+              </pre>
+            </>
+          )}
+
+          {copyMsg && <div style={{ fontSize: 12, color: '#1e7e34', marginBottom: 4 }}>{copyMsg}</div>}
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button
+              className="btn-sm btn-sm-gray"
+              style={{ flex: 1, padding: '9px', textAlign: 'center', borderRadius: 8 }}
+              onClick={() => setEditPress(emptyPress)}
+            >
+              + Add Press
+            </button>
+            {pressData.length > 0 && (
+              <button
+                className="btn btn-red"
+                style={{ flex: 1 }}
+                onClick={copyPassdown}
+              >
+                📋 Copy Passdown
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Edit / Add modal */}
+      {editPress !== null && (
+        <NightPressModal
+          parts={parts}
+          initial={editPress}
+          date={todayDate}
+          shift={shift}
+          updatedBy={user?.username || ''}
+          onSave={() => { setEditPress(null); load(); }}
+          onClose={() => setEditPress(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── Approvals Tab ─────────────────────────────────────────────
 function ApprovalsTab({ lang, user, parts, shiftParam }) {
   const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [editId, setEditId]           = useState(null);
-  const [editData, setEditData]       = useState({});
-  const [saving, setSaving]           = useState(false);
-  const [msg, setMsg]                 = useState('');
+  const [loading,     setLoading]     = useState(true);
+  const [editId,      setEditId]      = useState(null);
+  const [editData,    setEditData]    = useState({});
+  const [saving,      setSaving]      = useState(false);
+  const [msg,         setMsg]         = useState('');
+  const [refreshKey,  setRefreshKey]  = useState(0); // bumped after each approval to refresh Tonight panel
 
   useEffect(() => {
     gasCall('getPendingApprovals', shiftParam || {})
@@ -332,7 +592,7 @@ function ApprovalsTab({ lang, user, parts, shiftParam }) {
   const approve = async id => {
     setSaving(true); setMsg('');
     const r = await gasCall('approveSubmission', { submissionId: id, approvedBy: user.username });
-    if (r.success) setSubmissions(prev => prev.filter(s => s.id !== id));
+    if (r.success) { setSubmissions(prev => prev.filter(s => s.id !== id)); setRefreshKey(k => k + 1); }
     else setMsg(r.error || 'Error approving.');
     setSaving(false);
   };
@@ -345,79 +605,89 @@ function ApprovalsTab({ lang, user, parts, shiftParam }) {
   const saveAndApprove = async id => {
     setSaving(true); setMsg('');
     const r = await gasCall('editAndApproveSubmission', { submissionId: id, updates: editData, approvedBy: user.username });
-    if (r.success) { setSubmissions(prev => prev.filter(s => s.id !== id)); setEditId(null); }
+    if (r.success) { setSubmissions(prev => prev.filter(s => s.id !== id)); setEditId(null); setRefreshKey(k => k + 1); }
     else setMsg(r.error || 'Error saving.');
     setSaving(false);
   };
 
-  if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
-  if (!submissions.length) return <div className="empty-msg" style={{ padding: 40 }}>No pending submissions. All caught up ✓</div>;
-
   return (
     <>
-      {msg && <div className="alert alert-error">{msg}</div>}
-      <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>{submissions.length} pending review</div>
-      {submissions.map(s => {
-        const isEditing = editId === s.id;
-        const selPart   = (parts && editData.partId) ? parts.find(p => p.id === editData.partId) || null : null;
-        const g         = parseInt(s.good,  10) || 0;
-        const sc        = parseInt(s.scrap, 10) || 0;
-        const total     = g + sc;
-        const hit       = total > 0 ? Math.round((g / total) * 100) : null;
-        return (
-          <div key={s.id} className="card" style={{ marginBottom: 11, borderLeft: `4px solid ${isEditing ? '#f59e0b' : '#C8102E'}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: 16 }}>Press {s.pressNumber} — {s.operatorName}</div>
-                <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{s.operatorStamp} · {formatDateTime(s.submittedAt)}</div>
-              </div>
-              <span style={{ fontSize: 11, background: '#fff3cd', color: '#856404', padding: '3px 8px', borderRadius: 12, fontWeight: 'bold', flexShrink: 0 }}>Pending</span>
-            </div>
+      {/* Tonight's auto-built report — always shown at the top */}
+      <TonightPanel user={user} parts={parts} refreshKey={refreshKey} shiftParam={shiftParam} />
 
-            {!isEditing ? (
-              <>
-                {s.partNumber && <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>Part: <strong>{s.partNumber}</strong></div>}
-                <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
-                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Good</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#1e7e34' }}>{g}</div></div>
-                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Scrap</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#C8102E' }}>{sc}</div></div>
-                  {hit !== null && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Hit%</div><div style={{ fontSize: 26, fontWeight: 'bold', color: hitColor(hit) }}>{hit}%</div></div>}
-                </div>
-                {s.hasIssue && <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 'bold', marginBottom: 6 }}>⚠ Issue reported</div>}
-                {s.notes && <div style={{ fontSize: 13, fontStyle: 'italic', color: '#555', padding: '6px 10px', background: '#f8f8f8', borderRadius: 6, marginBottom: 8 }}>"{s.notes}"</div>}
-                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <button className="btn btn-red" style={{ flex: 1 }} onClick={() => approve(s.id)} disabled={saving}>✓ Approve</button>
-                  <button className="btn-sm btn-sm-amber" style={{ flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8 }} onClick={() => startEdit(s)}>✏ Edit & Approve</button>
-                </div>
-              </>
-            ) : (
-              <>
-                {parts && parts.length > 0 && (
-                  <div className="field">
-                    <label className="field-label">Part</label>
-                    <PartSearch parts={parts} selectedPart={selPart} onSelect={pt => setEditData(d => ({ ...d, partId: pt ? pt.id : '', partNumber: pt ? pt.partNumber : '' }))} placeholder="Search part..." />
+      {/* Pending approvals */}
+      {msg && <div className="alert alert-error">{msg}</div>}
+
+      {loading ? (
+        <div className="loading-msg">{tx(lang, 'loading')}</div>
+      ) : !submissions.length ? (
+        <div className="empty-msg" style={{ padding: 40 }}>No pending submissions. All caught up ✓</div>
+      ) : (
+        <>
+          <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>{submissions.length} pending review</div>
+          {submissions.map(s => {
+            const isEditing = editId === s.id;
+            const selPart   = (parts && editData.partId) ? parts.find(p => p.id === editData.partId) || null : null;
+            const g         = parseInt(s.good,  10) || 0;
+            const sc        = parseInt(s.scrap, 10) || 0;
+            const total     = g + sc;
+            const hit       = total > 0 ? Math.round((g / total) * 100) : null;
+            return (
+              <div key={s.id} className="card" style={{ marginBottom: 11, borderLeft: `4px solid ${isEditing ? '#f59e0b' : '#C8102E'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: 16 }}>Press {s.pressNumber} — {s.operatorName}</div>
+                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{s.operatorStamp} · {formatDateTime(s.submittedAt)}</div>
                   </div>
+                  <span style={{ fontSize: 11, background: '#fff3cd', color: '#856404', padding: '3px 8px', borderRadius: 12, fontWeight: 'bold', flexShrink: 0 }}>Pending</span>
+                </div>
+
+                {!isEditing ? (
+                  <>
+                    {s.partNumber && <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>Part: <strong>{s.partNumber}</strong></div>}
+                    <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+                      <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Good</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#1e7e34' }}>{g}</div></div>
+                      <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Scrap</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#C8102E' }}>{sc}</div></div>
+                      {hit !== null && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Hit%</div><div style={{ fontSize: 26, fontWeight: 'bold', color: hitColor(hit) }}>{hit}%</div></div>}
+                    </div>
+                    {s.hasIssue && <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 'bold', marginBottom: 6 }}>⚠ Issue reported</div>}
+                    {s.notes && <div style={{ fontSize: 13, fontStyle: 'italic', color: '#555', padding: '6px 10px', background: '#f8f8f8', borderRadius: 6, marginBottom: 8 }}>"{s.notes}"</div>}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                      <button className="btn btn-red" style={{ flex: 1 }} onClick={() => approve(s.id)} disabled={saving}>✓ Approve</button>
+                      <button className="btn-sm btn-sm-amber" style={{ flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8 }} onClick={() => startEdit(s)}>✏ Edit & Approve</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {parts && parts.length > 0 && (
+                      <div className="field">
+                        <label className="field-label">Part</label>
+                        <PartSearch parts={parts} selectedPart={selPart} onSelect={pt => setEditData(d => ({ ...d, partId: pt ? pt.id : '', partNumber: pt ? pt.partNumber : '' }))} placeholder="Search part..." />
+                      </div>
+                    )}
+                    <div className="three-col" style={{ marginBottom: 8 }}>
+                      <div><div className="col-label">Good</div><input type="text" inputMode="numeric" value={editData.good} placeholder="0" onChange={e => setEditData(d => ({ ...d, good: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
+                      <div><div className="col-label">Scrap</div><input type="text" inputMode="numeric" value={editData.scrap} placeholder="0" onChange={e => setEditData(d => ({ ...d, scrap: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
+                    </div>
+                    <div className="toggle-row" style={{ marginBottom: 8 }}>
+                      <span className="toggle-text">⚠ Had an issue</span>
+                      <label className="sw" htmlFor={`app-iss-${s.id}`}><input id={`app-iss-${s.id}`} type="checkbox" checked={!!editData.hasIssue} onChange={e => setEditData(d => ({ ...d, hasIssue: e.target.checked }))} /><span className="sw-track"></span></label>
+                    </div>
+                    <div className="field">
+                      <label className="field-label">Notes</label>
+                      <textarea value={editData.notes || ''} placeholder="Add or edit notes..." onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-red" style={{ flex: 1 }} onClick={() => saveAndApprove(s.id)} disabled={saving}>{saving ? '...' : '✓ Save & Approve'}</button>
+                      <button className="btn-sm btn-sm-gray" style={{ padding: '10px 16px', borderRadius: 8 }} onClick={() => setEditId(null)}>Cancel</button>
+                    </div>
+                  </>
                 )}
-                <div className="three-col" style={{ marginBottom: 8 }}>
-                  <div><div className="col-label">Good</div><input type="text" inputMode="numeric" value={editData.good} placeholder="0" onChange={e => setEditData(d => ({ ...d, good: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
-                  <div><div className="col-label">Scrap</div><input type="text" inputMode="numeric" value={editData.scrap} placeholder="0" onChange={e => setEditData(d => ({ ...d, scrap: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
-                </div>
-                <div className="toggle-row" style={{ marginBottom: 8 }}>
-                  <span className="toggle-text">⚠ Had an issue</span>
-                  <label className="sw" htmlFor={`app-iss-${s.id}`}><input id={`app-iss-${s.id}`} type="checkbox" checked={!!editData.hasIssue} onChange={e => setEditData(d => ({ ...d, hasIssue: e.target.checked }))} /><span className="sw-track"></span></label>
-                </div>
-                <div className="field">
-                  <label className="field-label">Notes</label>
-                  <textarea value={editData.notes || ''} placeholder="Add or edit notes..." onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))} />
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-red" style={{ flex: 1 }} onClick={() => saveAndApprove(s.id)} disabled={saving}>{saving ? '...' : '✓ Save & Approve'}</button>
-                  <button className="btn-sm btn-sm-gray" style={{ padding: '10px 16px', borderRadius: 8 }} onClick={() => setEditId(null)}>Cancel</button>
-                </div>
-              </>
-            )}
-          </div>
-        );
-      })}
+              </div>
+            );
+          })}
+        </>
+      )}
     </>
   );
 }
