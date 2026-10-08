@@ -422,9 +422,20 @@ function NightPressModal({ parts, initial, date, shift, updatedBy, onSave, onClo
 }
 
 // ── Tonight Panel ─────────────────────────────────────────────
+// For 2nd shift, approvals often happen after midnight — the shift date is yesterday
+const getShiftDate = (shift) => {
+  const now = new Date();
+  if (shift === 2 && now.getHours() < 10) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('en-CA');
+  }
+  return now.toLocaleDateString('en-CA');
+};
+
 function TonightPanel({ user, operators, parts, refreshKey, shiftParam }) {
-  const todayDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
   const shift     = shiftParam?.shift || user?.shift || 2;
+  const todayDate = getShiftDate(shift);
 
   const [report,    setReport]    = useState(null);
   const [loading,   setLoading]   = useState(true);
