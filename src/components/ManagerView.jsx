@@ -315,7 +315,9 @@ function ReportDetail({ report, lang, onBack, onArchive, operators, parts }) {
 }
 
 // ── Night Press Modal ─────────────────────────────────────────
-const PRESS_NUMBERS_NIGHT = [300, 452, 454, 455, 462, 501, 502, 1000, 1200];
+// Defined run order for 2nd shift presses — do NOT sort numerically
+const PRESS_NUMBERS_NIGHT = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
+const pressOrder = pn => { const i = PRESS_NUMBERS_NIGHT.indexOf(Number(pn)); return i === -1 ? 999 : i; };
 
 function NightPressModal({ parts, initial, date, shift, updatedBy, onSave, onClose }) {
   const isNew = !initial.pressNumber;
@@ -420,7 +422,7 @@ function NightPressModal({ parts, initial, date, shift, updatedBy, onSave, onClo
 }
 
 // ── Tonight Panel ─────────────────────────────────────────────
-function TonightPanel({ user, parts, refreshKey, shiftParam }) {
+function TonightPanel({ user, operators, parts, refreshKey, shiftParam }) {
   const todayDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
   const shift     = shiftParam?.shift || user?.shift || 2;
 
@@ -442,7 +444,7 @@ function TonightPanel({ user, parts, refreshKey, shiftParam }) {
   const pressData = report?.pressData || [];
 
   const passdownText = () => {
-    const sorted = [...pressData].sort((a, b) => Number(a.pressNumber) - Number(b.pressNumber));
+    const sorted = [...pressData].sort((a, b) => pressOrder(a.pressNumber) - pressOrder(b.pressNumber));
     const lines   = ['Molding -', '  (Good / Scrap / Goal)', ''];
     sorted.forEach(p => {
       if (p.isRunning === false) {
@@ -495,7 +497,7 @@ function TonightPanel({ user, parts, refreshKey, shiftParam }) {
             <>
               {/* Press rows */}
               {[...pressData]
-                .sort((a, b) => Number(a.pressNumber) - Number(b.pressNumber))
+                .sort((a, b) => pressOrder(a.pressNumber) - pressOrder(b.pressNumber))
                 .map(p => (
                   <div key={p.pressNumber} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f0f0f0' }}>
                     <div>
@@ -505,6 +507,10 @@ function TonightPanel({ user, parts, refreshKey, shiftParam }) {
                           <span style={{ fontWeight: 'normal', color: '#666', fontSize: 13 }}> — {p.operatorName}</span>
                         )}
                       </div>
+                      {p.operatorName && (() => {
+                        const stamp = p.operatorStamp || (operators || []).find(o => o.id === p.operatorId)?.stampNumber || '';
+                        return stamp ? <div style={{ fontSize: 12, color: '#aaa', marginTop: 1 }}>#{stamp}</div> : null;
+                      })()}
                       {p.partNumber && <div style={{ fontSize: 12, color: '#888', marginTop: 1 }}>{p.partNumber}</div>}
                       <div style={{ fontSize: 14, marginTop: 4 }}>
                         <span style={{ color: '#1e7e34', fontWeight: 'bold' }}>{p.good ?? 0}</span>
@@ -574,7 +580,7 @@ function TonightPanel({ user, parts, refreshKey, shiftParam }) {
 }
 
 // ── Approvals Tab ─────────────────────────────────────────────
-function ApprovalsTab({ lang, user, parts, shiftParam }) {
+function ApprovalsTab({ lang, user, operators, parts, shiftParam }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [editId,      setEditId]      = useState(null);
@@ -613,7 +619,7 @@ function ApprovalsTab({ lang, user, parts, shiftParam }) {
   return (
     <>
       {/* Tonight's auto-built report — always shown at the top */}
-      <TonightPanel user={user} parts={parts} refreshKey={refreshKey} shiftParam={shiftParam} />
+      <TonightPanel user={user} operators={operators} parts={parts} refreshKey={refreshKey} shiftParam={shiftParam} />
 
       {/* Pending approvals */}
       {msg && <div className="alert alert-error">{msg}</div>}
@@ -827,7 +833,7 @@ export function ManagerView({ lang, user, operators, setOperators, goals, setGoa
   const renderContent = () => {
     if (loading) return <div className="loading-msg">{tx(lang, 'loading')}</div>;
     if (tab === 'overview')   return <OverviewTab lang={lang} operators={operators} shiftParam={shiftParam} isAdmin={isAdmin} userShift={filterShift} />;
-    if (tab === 'approvals')  return <ApprovalsTab lang={lang} user={user} parts={parts} shiftParam={shiftParam} />;
+    if (tab === 'approvals')  return <ApprovalsTab lang={lang} user={user} operators={operators} parts={parts} shiftParam={shiftParam} />;
     if (tab === 'molders')    return <MolderProfilesTab lang={lang} operators={operators} user={user} shiftParam={shiftParam} />;
     if (tab === 'rotation') return <RotationView user={user} />;
     if (tab === 'ehsummary') return <EHSummaryTab lang={lang} shiftParam={shiftParam} />;
