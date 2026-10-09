@@ -519,7 +519,11 @@ function TonightPanel({ user, operators, parts, refreshKey, shiftParam }) {
                         )}
                       </div>
                       {p.operatorName && (() => {
-                        const stamp = p.operatorStamp || (operators || []).find(o => o.id === p.operatorId)?.stampNumber || '';
+                        const ops = operators || [];
+                        const stamp = p.operatorStamp
+                          || ops.find(o => o.id === p.operatorId)?.stampNumber
+                          || ops.find(o => o.name?.trim().toLowerCase() === p.operatorName?.trim().toLowerCase())?.stampNumber
+                          || '';
                         return stamp ? <div style={{ fontSize: 12, color: '#aaa', marginTop: 1 }}>#{stamp}</div> : null;
                       })()}
                       {p.partNumber && <div style={{ fontSize: 12, color: '#888', marginTop: 1 }}>{p.partNumber}</div>}
