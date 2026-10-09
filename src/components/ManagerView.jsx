@@ -596,31 +596,82 @@ function TonightPanel({ user, operators, parts, refreshKey, shiftParam }) {
 
 // ── Approvals Tab ─────────────────────────────────────────────
 function ApprovalsTab({ lang, user, operators, parts, shiftParam }) {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [editId,      setEditId]      = useState(null);
-  const [editData,    setEditData]    = useState({});
-  const [saving,      setSaving]      = useState(false);
-  const [msg,         setMsg]         = useState('');
-  const [refreshKey,  setRefreshKey]  = useState(0); // bumped after each approval to refresh Tonight panel
+  const [submissions,  setSubmissions]  = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [editId,       setEditId]       = useState(null);
+  const [editData,     setEditData]     = useState({});
+  const [saving,       setSaving]       = useState(false);
+  const [msg,          setMsg]          = useState('');
+  const [refreshKey,   setRefreshKey]   = useState(0);
+  const [inlineNotes,  setInlineNotes]  = useState({}); // { [submissionId]: string }
+  const [inlineIssue,  setInlineIssue]  = useState({}); // { [submissionId]: boolean }
 
   useEffect(() => {
     gasCall('getPendingApprovals', shiftParam || {})
-      .then(r => { if (r.success) setSubmissions(r.submissions || []); setLoading(false); })
+      .then(r => {
+        if (r.success) {
+          const subs = r.submissions || [];
+          setSubmissions(subs);
+          const notes = {}, issues = {};
+          subs.forEach(s => { notes[s.id] = s.notes || ''; issues[s.id] = !!s.hasIssue; });
+          setInlineNotes(notes);
+          setInlineIssue(issues);
+        }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 
-  const approve = async id => {
+  // Approve a single press, saving any inline notes/issue edits along the way
+  const approve = async (id) => {
     setSaving(true); setMsg('');
-    const r = await gasCall('approveSubmission', { submissionId: id, approvedBy: user.username });
+    const sub = submissions.find(s => s.id === id);
+    if (!sub) { setSaving(false); return; }
+    const notes    = inlineNotes[id] !== undefined ? inlineNotes[id] : (sub.notes || '');
+    const hasIssue = inlineIssue[id] !== undefined ? inlineIssue[id] : !!sub.hasIssue;
+    const changed  = notes !== (sub.notes || '') || hasIssue !== !!sub.hasIssue;
+    const r = changed
+      ? await gasCall('editAndApproveSubmission', {
+          submissionId: id,
+          updates: { good: String(sub.good || 0), scrap: String(sub.scrap || 0), partId: sub.partId || '', partNumber: sub.partNumber || '', notes, hasIssue },
+          approvedBy: user.username
+        })
+      : await gasCall('approveSubmission', { submissionId: id, approvedBy: user.username });
     if (r.success) { setSubmissions(prev => prev.filter(s => s.id !== id)); setRefreshKey(k => k + 1); }
     else setMsg(r.error || 'Error approving.');
     setSaving(false);
   };
 
+  // Approve every press for one operator in sequence
+  const approveAll = async (opSubs) => {
+    setSaving(true); setMsg('');
+    for (const sub of opSubs) {
+      const notes    = inlineNotes[sub.id] !== undefined ? inlineNotes[sub.id] : (sub.notes || '');
+      const hasIssue = inlineIssue[sub.id] !== undefined ? inlineIssue[sub.id] : !!sub.hasIssue;
+      const changed  = notes !== (sub.notes || '') || hasIssue !== !!sub.hasIssue;
+      const r = changed
+        ? await gasCall('editAndApproveSubmission', {
+            submissionId: sub.id,
+            updates: { good: String(sub.good || 0), scrap: String(sub.scrap || 0), partId: sub.partId || '', partNumber: sub.partNumber || '', notes, hasIssue },
+            approvedBy: user.username
+          })
+        : await gasCall('approveSubmission', { submissionId: sub.id, approvedBy: user.username });
+      if (!r.success) { setMsg(r.error || 'Error approving.'); setSaving(false); return; }
+    }
+    const doneIds = new Set(opSubs.map(s => s.id));
+    setSubmissions(prev => prev.filter(s => !doneIds.has(s.id)));
+    setRefreshKey(k => k + 1);
+    setSaving(false);
+  };
+
   const startEdit = sub => {
     setEditId(sub.id);
-    setEditData({ good: String(sub.good || 0), scrap: String(sub.scrap || 0), partId: sub.partId || '', partNumber: sub.partNumber || '', notes: sub.notes || '', hasIssue: !!sub.hasIssue });
+    setEditData({
+      good: String(sub.good || 0), scrap: String(sub.scrap || 0),
+      partId: sub.partId || '', partNumber: sub.partNumber || '',
+      notes: inlineNotes[sub.id] || sub.notes || '',
+      hasIssue: inlineIssue[sub.id] !== undefined ? inlineIssue[sub.id] : !!sub.hasIssue
+    });
   };
 
   const saveAndApprove = async id => {
@@ -631,12 +682,22 @@ function ApprovalsTab({ lang, user, operators, parts, shiftParam }) {
     setSaving(false);
   };
 
+  // Group by operator (preserves submission order)
+  const grouped = (() => {
+    const map = new Map();
+    submissions.forEach(s => {
+      const key = s.operatorId || s.operatorName || 'unknown';
+      if (!map.has(key)) map.set(key, { key, operatorName: s.operatorName, operatorStamp: s.operatorStamp, subs: [] });
+      map.get(key).subs.push(s);
+    });
+    return [...map.values()];
+  })();
+
   return (
     <>
-      {/* Tonight's auto-built report — always shown at the top */}
+      {/* Tonight's auto-built report */}
       <TonightPanel user={user} operators={operators} parts={parts} refreshKey={refreshKey} shiftParam={shiftParam} />
 
-      {/* Pending approvals */}
       {msg && <div className="alert alert-error">{msg}</div>}
 
       {loading ? (
@@ -646,67 +707,119 @@ function ApprovalsTab({ lang, user, operators, parts, shiftParam }) {
       ) : (
         <>
           <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>{submissions.length} pending review</div>
-          {submissions.map(s => {
-            const isEditing = editId === s.id;
-            const selPart   = (parts && editData.partId) ? parts.find(p => p.id === editData.partId) || null : null;
-            const g         = parseInt(s.good,  10) || 0;
-            const sc        = parseInt(s.scrap, 10) || 0;
-            const total     = g + sc;
-            const hit       = total > 0 ? Math.round((g / total) * 100) : null;
-            return (
-              <div key={s.id} className="card" style={{ marginBottom: 11, borderLeft: `4px solid ${isEditing ? '#f59e0b' : '#C8102E'}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 'bold', fontSize: 16 }}>Press {s.pressNumber} — {s.operatorName}</div>
-                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{s.operatorStamp} · {formatDateTime(s.submittedAt)}</div>
-                  </div>
-                  <span style={{ fontSize: 11, background: '#fff3cd', color: '#856404', padding: '3px 8px', borderRadius: 12, fontWeight: 'bold', flexShrink: 0 }}>Pending</span>
-                </div>
 
-                {!isEditing ? (
-                  <>
-                    {s.partNumber && <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>Part: <strong>{s.partNumber}</strong></div>}
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
-                      <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Good</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#1e7e34' }}>{g}</div></div>
-                      <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Scrap</div><div style={{ fontSize: 26, fontWeight: 'bold', color: '#C8102E' }}>{sc}</div></div>
-                      {hit !== null && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Hit%</div><div style={{ fontSize: 26, fontWeight: 'bold', color: hitColor(hit) }}>{hit}%</div></div>}
-                    </div>
-                    {s.hasIssue && <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 'bold', marginBottom: 6 }}>⚠ Issue reported</div>}
-                    {s.notes && <div style={{ fontSize: 13, fontStyle: 'italic', color: '#555', padding: '6px 10px', background: '#f8f8f8', borderRadius: 6, marginBottom: 8 }}>"{s.notes}"</div>}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                      <button className="btn btn-red" style={{ flex: 1 }} onClick={() => approve(s.id)} disabled={saving}>✓ Approve</button>
-                      <button className="btn-sm btn-sm-amber" style={{ flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8 }} onClick={() => startEdit(s)}>✏ Edit & Approve</button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {parts && parts.length > 0 && (
-                      <div className="field">
-                        <label className="field-label">Part</label>
-                        <PartSearch parts={parts} selectedPart={selPart} onSelect={pt => setEditData(d => ({ ...d, partId: pt ? pt.id : '', partNumber: pt ? pt.partNumber : '' }))} placeholder="Search part..." />
-                      </div>
-                    )}
-                    <div className="three-col" style={{ marginBottom: 8 }}>
-                      <div><div className="col-label">Good</div><input type="text" inputMode="numeric" value={editData.good} placeholder="0" onChange={e => setEditData(d => ({ ...d, good: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
-                      <div><div className="col-label">Scrap</div><input type="text" inputMode="numeric" value={editData.scrap} placeholder="0" onChange={e => setEditData(d => ({ ...d, scrap: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
-                    </div>
-                    <div className="toggle-row" style={{ marginBottom: 8 }}>
-                      <span className="toggle-text">⚠ Had an issue</span>
-                      <label className="sw" htmlFor={`app-iss-${s.id}`}><input id={`app-iss-${s.id}`} type="checkbox" checked={!!editData.hasIssue} onChange={e => setEditData(d => ({ ...d, hasIssue: e.target.checked }))} /><span className="sw-track"></span></label>
-                    </div>
-                    <div className="field">
-                      <label className="field-label">Notes</label>
-                      <textarea value={editData.notes || ''} placeholder="Add or edit notes..." onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))} />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn btn-red" style={{ flex: 1 }} onClick={() => saveAndApprove(s.id)} disabled={saving}>{saving ? '...' : '✓ Save & Approve'}</button>
-                      <button className="btn-sm btn-sm-gray" style={{ padding: '10px 16px', borderRadius: 8 }} onClick={() => setEditId(null)}>Cancel</button>
-                    </div>
-                  </>
+          {grouped.map(group => (
+            <div key={group.key} className="card" style={{ marginBottom: 16, borderLeft: '4px solid #C8102E' }}>
+
+              {/* ── Operator header ── */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: 17 }}>{group.operatorName}</div>
+                  {group.operatorStamp && <div style={{ fontSize: 12, color: '#888', marginTop: 1 }}>#{group.operatorStamp}</div>}
+                </div>
+                {group.subs.length > 1 && (
+                  <button
+                    className="btn btn-red"
+                    style={{ padding: '7px 14px', fontSize: 13 }}
+                    onClick={() => approveAll(group.subs)}
+                    disabled={saving}
+                  >
+                    ✓ Approve All ({group.subs.length})
+                  </button>
                 )}
               </div>
-            );
-          })}
+
+              {/* ── Per-press rows ── */}
+              {group.subs.map((s, idx) => {
+                const isEditing = editId === s.id;
+                const selPart   = (parts && editData.partId && isEditing) ? parts.find(p => p.id === editData.partId) || null : null;
+                const g         = parseInt(s.good,  10) || 0;
+                const sc        = parseInt(s.scrap, 10) || 0;
+                const total     = g + sc;
+                const hit       = total > 0 ? Math.round((g / total) * 100) : null;
+
+                return (
+                  <div key={s.id} style={{ borderTop: idx > 0 ? '1px solid #eee' : 'none', paddingTop: idx > 0 ? 14 : 0, marginTop: idx > 0 ? 14 : 0 }}>
+
+                    {/* Press header row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: 15 }}>Press {s.pressNumber}</div>
+                        <div style={{ fontSize: 11, color: '#888', marginTop: 1 }}>{formatDateTime(s.submittedAt)}</div>
+                      </div>
+                      <span style={{ fontSize: 11, background: '#fff3cd', color: '#856404', padding: '3px 8px', borderRadius: 12, fontWeight: 'bold' }}>Pending</span>
+                    </div>
+
+                    {!isEditing ? (
+                      <>
+                        {s.partNumber && <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>Part: <strong>{s.partNumber}</strong></div>}
+
+                        {/* Stats */}
+                        <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
+                          <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Good</div><div style={{ fontSize: 24, fontWeight: 'bold', color: '#1e7e34' }}>{g}</div></div>
+                          <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Scrap</div><div style={{ fontSize: 24, fontWeight: 'bold', color: '#C8102E' }}>{sc}</div></div>
+                          {hit !== null && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 2 }}>Hit%</div><div style={{ fontSize: 24, fontWeight: 'bold', color: hitColor(hit) }}>{hit}%</div></div>}
+                        </div>
+
+                        {/* Issue toggle — always visible per press */}
+                        <div className="toggle-row" style={{ marginBottom: 8 }}>
+                          <span className="toggle-text">⚠ Had an issue</span>
+                          <label className="sw" htmlFor={`inline-iss-${s.id}`}>
+                            <input id={`inline-iss-${s.id}`} type="checkbox"
+                              checked={!!inlineIssue[s.id]}
+                              onChange={e => setInlineIssue(prev => ({ ...prev, [s.id]: e.target.checked }))}
+                            />
+                            <span className="sw-track"></span>
+                          </label>
+                        </div>
+
+                        {/* Notes — always visible per press */}
+                        <div className="field" style={{ marginBottom: 10 }}>
+                          <label className="field-label">Notes — Press {s.pressNumber}</label>
+                          <textarea
+                            rows={2}
+                            value={inlineNotes[s.id] || ''}
+                            placeholder="Add notes for this press…"
+                            onChange={e => setInlineNotes(prev => ({ ...prev, [s.id]: e.target.value }))}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn btn-red" style={{ flex: 1 }} onClick={() => approve(s.id)} disabled={saving}>✓ Approve</button>
+                          <button className="btn-sm btn-sm-amber" style={{ flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8 }} onClick={() => startEdit(s)}>✏ Full Edit</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {parts && parts.length > 0 && (
+                          <div className="field">
+                            <label className="field-label">Part</label>
+                            <PartSearch parts={parts} selectedPart={selPart} onSelect={pt => setEditData(d => ({ ...d, partId: pt ? pt.id : '', partNumber: pt ? pt.partNumber : '' }))} placeholder="Search part..." />
+                          </div>
+                        )}
+                        <div className="three-col" style={{ marginBottom: 8 }}>
+                          <div><div className="col-label">Good</div><input type="text" inputMode="numeric" value={editData.good} placeholder="0" onChange={e => setEditData(d => ({ ...d, good: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
+                          <div><div className="col-label">Scrap</div><input type="text" inputMode="numeric" value={editData.scrap} placeholder="0" onChange={e => setEditData(d => ({ ...d, scrap: e.target.value.replace(/[^0-9]/g, '') }))} /></div>
+                        </div>
+                        <div className="toggle-row" style={{ marginBottom: 8 }}>
+                          <span className="toggle-text">⚠ Had an issue</span>
+                          <label className="sw" htmlFor={`app-iss-${s.id}`}><input id={`app-iss-${s.id}`} type="checkbox" checked={!!editData.hasIssue} onChange={e => setEditData(d => ({ ...d, hasIssue: e.target.checked }))} /><span className="sw-track"></span></label>
+                        </div>
+                        <div className="field">
+                          <label className="field-label">Notes</label>
+                          <textarea value={editData.notes || ''} placeholder="Add or edit notes..." onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn btn-red" style={{ flex: 1 }} onClick={() => saveAndApprove(s.id)} disabled={saving}>{saving ? '...' : '✓ Save & Approve'}</button>
+                          <button className="btn-sm btn-sm-gray" style={{ padding: '10px 16px', borderRadius: 8 }} onClick={() => setEditId(null)}>Cancel</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </>
       )}
     </>
