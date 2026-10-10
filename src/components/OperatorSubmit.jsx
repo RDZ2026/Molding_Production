@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { gasCall } from '../api';
 
+const PRESS_NUMBERS = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
+
+// Returns the shift date — for 2nd shift, approvals often happen after midnight
+const getShiftDate = (shiftNum) => {
+  const now = new Date();
+  if (shiftNum === 2 && now.getHours() < 10) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('en-CA'); // "YYYY-MM-DD"
+  }
+  return now.toLocaleDateString('en-CA');
+};
+
 export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }) {
   const [pressNumber, setPressNumber] = useState('');
   const [partSearch, setPartSearch] = useState('');
@@ -47,11 +60,13 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
     if (!pressNumber || !selectedPart || good === '') return;
     setSaving(true); setErr('');
     try {
+      const shiftNum = user.shift || shift;
       const pl = {
+        date: getShiftDate(shiftNum),
         operatorId: user.id,
         operatorName: user.name,
         operatorStamp: user.stampNumber || '',
-        shift: user.shift || shift,
+        shift: shiftNum,
         pressNumber: parseInt(pressNumber),
         partId: selectedPart.id,
         partNumber: selectedPart.partNumber,
@@ -135,7 +150,7 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
           <label style={labelStyle}>Press #</label>
           <select value={pressNumber} onChange={e => setPressNumber(e.target.value)} style={inputStyle}>
             <option value="">Select press...</option>
-            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+            {PRESS_NUMBERS.map(n => (
               <option key={n} value={n}>Press {n}</option>
             ))}
           </select>
