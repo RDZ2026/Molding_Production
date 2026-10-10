@@ -3,27 +3,31 @@ import { gasCall } from '../api';
 
 const PRESS_NUMBERS = [452, 454, 462, 455, 300, 501, 502, 1000, 1200];
 
-// Returns the shift date — for 2nd shift, approvals often happen after midnight
 const getShiftDate = (shiftNum) => {
   const now = new Date();
   if (shiftNum === 2 && now.getHours() < 10) {
     const d = new Date(now);
     d.setDate(d.getDate() - 1);
-    return d.toLocaleDateString('en-CA'); // "YYYY-MM-DD"
+    return d.toLocaleDateString('en-CA');
   }
   return now.toLocaleDateString('en-CA');
 };
 
+const emptyEntry = () => ({
+  _id: Math.random().toString(36).slice(2),
+  pressNumber: '',
+  selectedPart: null,
+  partSearch: '',
+  good: '',
+  scrap: '',
+  hasIssue: false,
+  notes: '',
+});
+
 export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }) {
-  const [pressNumber, setPressNumber] = useState('');
-  const [partSearch, setPartSearch] = useState('');
-  const [selectedPart, setSelectedPart] = useState(null);
-  const [good, setGood] = useState('');
-  const [scrap, setScrap] = useState('');
-  const [hasIssue, setHasIssue] = useState(false);
-  const [notes, setNotes] = useState('');
+  const [entries, setEntries] = useState([emptyEntry()]);
+  const [submittedMap, setSubmittedMap] = useState({}); // { pressNumber: submissionId }
   const [saving, setSaving] = useState(false);
-  const [submitted, setSubmitted] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState(false);
@@ -37,13 +41,17 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
         });
         if (r.success && r.submission) {
           const s = r.submission;
-          setSubmitted(s);
-          setPressNumber(String(s.pressNumber || ''));
-          setGood(String(s.good ?? ''));
-          setScrap(String(s.scrap ?? ''));
-          setHasIssue(!!s.hasIssue);
-          setNotes(s.notes || '');
-          if (s.partId) setSelectedPart({ id: s.partId, partNumber: s.partNumber, description: '' });
+          setEntries([{
+            _id: Math.random().toString(36).slice(2),
+            pressNumber: String(s.pressNumber || ''),
+            selectedPart: s.partId ? { id: s.partId, partNumber: s.partNumber, description: '' } : null,
+            partSearch: '',
+            good: String(s.good ?? ''),
+            scrap: String(s.scrap ?? ''),
+            hasIssue: !!s.hasIssue,
+            notes: s.notes || '',
+          }]);
+          setSubmittedMap({ [String(s.pressNumber)]: s.id });
         }
       } catch {}
       setLoading(false);
@@ -51,39 +59,53 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
     check();
   }, []);
 
-  const filteredParts = partSearch.length < 2 ? [] : parts.filter(p =>
-    p.partNumber.toLowerCase().includes(partSearch.toLowerCase()) ||
-    (p.description || '').toLowerCase().includes(partSearch.toLowerCase())
-  );
+  const updateEntry = (id, field, value) => {
+    setEntries(prev => prev.map(e => e._id === id ? { ...e, [field]: value } : e));
+  };
+
+  const removeEntry = (id) => {
+    setEntries(prev => prev.filter(e => e._id !== id));
+  };
+
+  const addEntry = () => {
+    setEntries(prev => [...prev, emptyEntry()]);
+  };
 
   const handleSubmit = async () => {
-    if (!pressNumber || !selectedPart || good === '') return;
+    const valid = entries.filter(e => e.pressNumber && e.selectedPart && e.good !== '');
+    if (valid.length === 0) return;
     setSaving(true); setErr('');
     try {
       const shiftNum = user.shift || shift;
-      const pl = {
-        date: getShiftDate(shiftNum),
-        operatorId: user.id,
-        operatorName: user.name,
-        operatorStamp: user.stampNumber || '',
-        shift: shiftNum,
-        pressNumber: parseInt(pressNumber),
-        partId: selectedPart.id,
-        partNumber: selectedPart.partNumber,
-        good: parseInt(good) || 0,
-        scrap: parseInt(scrap) || 0,
-        hasIssue,
-        notes: notes.trim(),
-      };
-      const action = submitted ? 'updateOperatorSubmission' : 'submitOperatorReport';
-      if (submitted) pl.id = submitted.id;
-      const r = await gasCall(action, pl);
-      if (r.success) {
-        setSuccess(true);
-        setSubmitted({ ...pl, id: r.id || submitted?.id, status: 'pending' });
-      } else {
-        setErr(r.error || 'Error saving. Try again.');
+      for (const e of valid) {
+        const pl = {
+          date: getShiftDate(shiftNum),
+          operatorId: user.id,
+          operatorName: user.name,
+          operatorStamp: user.stampNumber || '',
+          shift: shiftNum,
+          pressNumber: parseInt(e.pressNumber),
+          partId: e.selectedPart.id,
+          partNumber: e.selectedPart.partNumber,
+          good: parseInt(e.good) || 0,
+          scrap: parseInt(e.scrap) || 0,
+          hasIssue: e.hasIssue,
+          notes: e.notes.trim(),
+        };
+        const existingId = submittedMap[String(e.pressNumber)];
+        const action = existingId ? 'updateOperatorSubmission' : 'submitOperatorReport';
+        if (existingId) pl.id = existingId;
+        const r = await gasCall(action, pl);
+        if (!r.success) {
+          setErr(r.error || 'Error saving. Try again.');
+          setSaving(false);
+          return;
+        }
+        if (!existingId && r.id) {
+          setSubmittedMap(prev => ({ ...prev, [String(e.pressNumber)]: r.id }));
+        }
       }
+      setSuccess(true);
     } catch {
       setErr('Network error. Try again.');
     }
@@ -101,7 +123,8 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
     );
   }
 
-  const canSubmit = pressNumber && selectedPart && good !== '';
+  const canSubmit = entries.some(e => e.pressNumber && e.selectedPart && e.good !== '');
+  const hasExisting = Object.keys(submittedMap).length > 0;
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 40px', fontFamily: 'system-ui, sans-serif' }}>
@@ -131,9 +154,9 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
         </div>
       )}
 
-      {submitted && !success && (
+      {hasExisting && !success && (
         <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 8, padding: '12px 16px', marginBottom: 20, color: '#9a3412', fontSize: 13 }}>
-          You already submitted a report today (status: <strong>{submitted.status || 'pending'}</strong>). You can update it below.
+          You already submitted a report today. You can update it below.
         </div>
       )}
 
@@ -143,120 +166,36 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-        {/* Press Number */}
-        <div>
-          <label style={labelStyle}>Press #</label>
-          <select value={pressNumber} onChange={e => setPressNumber(e.target.value)} style={inputStyle}>
-            <option value="">Select press...</option>
-            {PRESS_NUMBERS.map(n => (
-              <option key={n} value={n}>Press {n}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Part Search */}
-        <div>
-          <label style={labelStyle}>Part Number</label>
-          {selectedPart ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', border: '1.5px solid #C8102E', borderRadius: 8, background: '#fff5f5' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{selectedPart.partNumber}</div>
-                {selectedPart.description && (
-                  <div style={{ color: '#888', fontSize: 12 }}>{selectedPart.description}</div>
-                )}
-              </div>
-              <button onClick={() => { setSelectedPart(null); setPartSearch(''); }}
-                style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>
-                ×
-              </button>
-            </div>
-          ) : (
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                value={partSearch}
-                onChange={e => setPartSearch(e.target.value)}
-                placeholder="Type part number to search..."
-                autoCapitalize="none"
-                style={{ ...inputStyle, paddingRight: 36 }}
-              />
-              {filteredParts.length > 0 && (
-                <div style={{ position: 'absolute', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 8px 8px', maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                  {filteredParts.map(p => (
-                    <div key={p.id}
-                      onClick={() => { setSelectedPart(p); setPartSearch(''); }}
-                      style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6' }}
-                      onTouchStart={e => e.currentTarget.style.background = '#f9fafb'}
-                      onTouchEnd={e => e.currentTarget.style.background = ''}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{p.partNumber}</div>
-                      {p.description && <div style={{ color: '#888', fontSize: 12 }}>{p.description}</div>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {partSearch.length >= 2 && filteredParts.length === 0 && (
-                <div style={{ marginTop: 6, color: '#aaa', fontSize: 13 }}>No matching parts found</div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Good / Scrap counts */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Good Parts</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              value={good}
-              onChange={e => setGood(e.target.value)}
-              placeholder="0"
-              style={{ ...inputStyle, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Scrap</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              value={scrap}
-              onChange={e => setScrap(e.target.value)}
-              placeholder="0"
-              style={{ ...inputStyle, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }}
-            />
-          </div>
-        </div>
-
-        {/* Issue toggle */}
-        <div
-          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer' }}
-          onClick={() => setHasIssue(!hasIssue)}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Report an Issue</div>
-            <div style={{ color: '#888', fontSize: 12 }}>Machine, material, safety, or quality concern</div>
-          </div>
-          <div style={{ width: 44, height: 24, borderRadius: 12, background: hasIssue ? '#C8102E' : '#ddd', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-            <div style={{ position: 'absolute', top: 2, left: hasIssue ? 22 : 2, width: 20, height: 20, borderRadius: 10, background: 'white', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }} />
-          </div>
-        </div>
-
-        {/* Notes — always visible if issue flagged, optional otherwise */}
-        <div>
-          <label style={labelStyle}>
-            Notes
-            {!hasIssue && <span style={{ color: '#ccc', fontWeight: 400, textTransform: 'none', marginLeft: 6, fontSize: 11 }}>(optional)</span>}
-          </label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder={hasIssue ? 'Describe the issue...' : 'Any additional notes...'}
-            style={{ ...inputStyle, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {entries.map((entry, idx) => (
+          <PressEntry
+            key={entry._id}
+            entry={entry}
+            idx={idx}
+            parts={parts}
+            isExisting={!!submittedMap[String(entry.pressNumber)]}
+            showRemove={entries.length > 1}
+            onUpdate={(field, value) => updateEntry(entry._id, field, value)}
+            onRemove={() => removeEntry(entry._id)}
           />
-        </div>
+        ))}
 
-        {/* Submit button */}
+        <button
+          onClick={addEntry}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            background: 'none',
+            border: '1.5px dashed #ddd',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            color: '#888',
+            cursor: 'pointer',
+          }}>
+          + Add Another Press
+        </button>
+
         <button
           onClick={handleSubmit}
           disabled={saving || !canSubmit}
@@ -272,12 +211,151 @@ export function OperatorSubmit({ lang, user, operators, parts, shift, onLogout }
             cursor: canSubmit ? 'pointer' : 'default',
             transition: 'background 0.15s',
           }}>
-          {saving ? 'Submitting...' : submitted ? 'Update Report' : 'Submit End-of-Shift Report'}
+          {saving ? 'Submitting...' : hasExisting ? 'Update Report' : 'Submit End-of-Shift Report'}
         </button>
       </div>
 
       <div style={{ marginTop: 32, textAlign: 'center', color: '#ddd', fontSize: 11 }}>
         nVent Hoffman · Molding · Shift {user.shift || shift}
+      </div>
+    </div>
+  );
+}
+
+function PressEntry({ entry, idx, parts, isExisting, showRemove, onUpdate, onRemove }) {
+  const filteredParts = entry.partSearch.length < 2 ? [] : parts.filter(p =>
+    p.partNumber.toLowerCase().includes(entry.partSearch.toLowerCase()) ||
+    (p.description || '').toLowerCase().includes(entry.partSearch.toLowerCase())
+  );
+
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: '16px 14px', background: '#fafafa' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#444', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Press {idx + 1}
+          {isExisting && <span style={{ color: '#9a3412', fontSize: 11, fontWeight: 600, marginLeft: 8 }}>(submitted)</span>}
+        </div>
+        {showRemove && (
+          <button onClick={onRemove}
+            style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>
+            ×
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Press Number */}
+        <div>
+          <label style={labelStyle}>Press #</label>
+          <select value={entry.pressNumber} onChange={e => onUpdate('pressNumber', e.target.value)} style={inputStyle}>
+            <option value="">Select press...</option>
+            {PRESS_NUMBERS.map(n => (
+              <option key={n} value={n}>Press {n}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Part Number */}
+        <div>
+          <label style={labelStyle}>Part Number</label>
+          {entry.selectedPart ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', border: '1.5px solid #C8102E', borderRadius: 8, background: '#fff5f5' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{entry.selectedPart.partNumber}</div>
+                {entry.selectedPart.description && (
+                  <div style={{ color: '#888', fontSize: 12 }}>{entry.selectedPart.description}</div>
+                )}
+              </div>
+              <button onClick={() => { onUpdate('selectedPart', null); onUpdate('partSearch', ''); }}
+                style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>
+                ×
+              </button>
+            </div>
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={entry.partSearch}
+                onChange={e => onUpdate('partSearch', e.target.value)}
+                placeholder="Type part number to search..."
+                autoCapitalize="none"
+                style={{ ...inputStyle, paddingRight: 36 }}
+              />
+              {filteredParts.length > 0 && (
+                <div style={{ position: 'absolute', left: 0, right: 0, zIndex: 10, background: 'white', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 8px 8px', maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  {filteredParts.map(p => (
+                    <div key={p.id}
+                      onClick={() => { onUpdate('selectedPart', p); onUpdate('partSearch', ''); }}
+                      style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6' }}
+                      onTouchStart={e => e.currentTarget.style.background = '#f9fafb'}
+                      onTouchEnd={e => e.currentTarget.style.background = ''}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{p.partNumber}</div>
+                      {p.description && <div style={{ color: '#888', fontSize: 12 }}>{p.description}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {entry.partSearch.length >= 2 && filteredParts.length === 0 && (
+                <div style={{ marginTop: 6, color: '#aaa', fontSize: 13 }}>No matching parts found</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Good / Scrap */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Good Parts</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={entry.good}
+              onChange={e => onUpdate('good', e.target.value)}
+              placeholder="0"
+              style={{ ...inputStyle, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Scrap</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={entry.scrap}
+              onChange={e => onUpdate('scrap', e.target.value)}
+              placeholder="0"
+              style={{ ...inputStyle, fontSize: 28, fontWeight: 700, textAlign: 'center', padding: '12px 8px' }}
+            />
+          </div>
+        </div>
+
+        {/* Issue toggle */}
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer', background: 'white' }}
+          onClick={() => onUpdate('hasIssue', !entry.hasIssue)}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Report an Issue</div>
+            <div style={{ color: '#888', fontSize: 12 }}>Machine, material, safety, or quality concern</div>
+          </div>
+          <div style={{ width: 44, height: 24, borderRadius: 12, background: entry.hasIssue ? '#C8102E' : '#ddd', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+            <div style={{ position: 'absolute', top: 2, left: entry.hasIssue ? 22 : 2, width: 20, height: 20, borderRadius: 10, background: 'white', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }} />
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <label style={labelStyle}>
+            Notes
+            {!entry.hasIssue && <span style={{ color: '#ccc', fontWeight: 400, textTransform: 'none', marginLeft: 6, fontSize: 11 }}>(optional)</span>}
+          </label>
+          <textarea
+            value={entry.notes}
+            onChange={e => onUpdate('notes', e.target.value)}
+            placeholder={entry.hasIssue ? 'Describe the issue...' : 'Any additional notes...'}
+            style={{ ...inputStyle, minHeight: 72, resize: 'vertical', fontFamily: 'inherit' }}
+          />
+        </div>
+
       </div>
     </div>
   );
